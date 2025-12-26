@@ -2,7 +2,7 @@
 
 ## 1. Passo a passo de instalação
 1. Crie uma planilha Google chamada **Pulse**.
-2. Em `Extensões > App Script`, substitua o projeto pelos arquivos deste repositório (`backend.gs`, `auth.gs`, `permissions.gs`, `data.gs`, `ui.html`, `css.css`, `js.js`).
+2. Em `Extensões > App Script`, substitua o projeto pelos dois arquivos deste repositório (`code.gs` e `ui.html`).
 3. Publique em `Implantar > Implantação nova` como **Aplicativo da Web**:
    - Executar como: **Usuário que acessa**.
    - Quem pode acessar: **Sua organização**.
