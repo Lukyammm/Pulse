@@ -6,7 +6,7 @@
 3. Publique em `Implantar > Implantação nova` como **Aplicativo da Web**:
    - Executar como: **Usuário que acessa**.
    - Quem pode acessar: **Sua organização**.
-4. Abra a URL do WebApp e confirme que a tela inicial exibe apenas o estado "Sistema aguardando acesso".
+4. Abra a URL do WebApp e confirme que a tela inicial exibe apenas o cartão "Acessar sistema"; clique no botão **Acessar** para validar a sessão e só então liberar a aplicação.
 5. Rode o menu `Pulse WebApp > Setup` (se container-bound) ou execute a função `ensureSetup_()` para criar abas e cabeçalhos automaticamente.
 6. A conta `admin@local` é criada apenas na primeira execução com senha `admin123`; altere imediatamente pelo backend (atualize hash na aba `USUARIOS`).
 
@@ -31,3 +31,4 @@
 - A senha inicial `admin123` precisa ser trocada manualmente atualizando `senha_hash` para o novo hash (use `hashPassword_()` via editor).
 - Não há testes automatizados; valide em ambiente controlado.
 - Sons/alertas não são carregados (implementação focada em backend seguro e UI Apple-like).
+- O layout mobile foi otimizado para telas menores, mas continua com a mesma base funcional do desktop.

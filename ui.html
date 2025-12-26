@@ -61,6 +61,9 @@
       flex-direction:column;
       gap:18px;
     }
+    .gateAction{display:flex; flex-direction:column; gap:12px; padding:12px; border:1px dashed rgba(10,132,255,.35); border-radius:18px; background:rgba(10,132,255,.05);}
+    .gateAction .gateLabel{font-size:16px; font-weight:800; color:#0b254a;}
+    .gateAction .gateHint{font-size:13px; color:var(--muted);}
     .gateBrand{display:flex; align-items:center; gap:12px;}
     .gateTitle{font-weight:800; font-size:20px; letter-spacing:-0.3px;}
     .gateSubtitle{color:var(--muted); font-size:13px;}
@@ -275,6 +278,19 @@
       #mobileDrawerSpacer{height:72px;}
       .topbar .row{width:100%; justify-content:flex-start;}
     }
+    @media (max-width: 540px){
+      body{padding-bottom:86px;}
+      .gateCard{padding:22px;}
+      .gateState, .gateError, .gateAction{padding:12px;}
+      .topbar{top:0; position:sticky; border-radius:12px; box-shadow:0 12px 28px rgba(15,23,42,.16);}
+      .topbar .row{gap:8px;}
+      .btn{width:100%; text-align:center;}
+      .row.stackMobile{flex-direction:column; align-items:stretch;}
+      .card .bd{padding:14px;}
+      .card .hd{padding:14px;}
+      .ticket{padding:14px;}
+      .mobileNav{gap:6px;}
+    }
   </style>
 </head>
 
@@ -286,6 +302,13 @@
         <div>
           <div class="gateTitle">Pulse</div>
           <div class="gateSubtitle">Acesso seguro e perfilado</div>
+        </div>
+      </div>
+      <div id="gateAction" class="gateAction">
+        <div class="gateLabel">Acessar sistema</div>
+        <div class="gateHint">Clique em acessar para validar sua sessão.</div>
+        <div class="row stackMobile">
+          <button class="btn primary" id="btnAccess">Acessar</button>
         </div>
       </div>
       <div id="gateState" class="gateState">
@@ -636,24 +659,38 @@
     function setGateState(mode, message){
       const gate = $("gate");
       const gateState = $("gateState");
+      const gateAction = $("gateAction");
       const gateError = $("gateError");
       const gateErrorMsg = $("gateErrorMsg");
-      if(mode === "loading"){
+      if(mode === "idle"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
+        gateAction.style.display = "flex";
+        gateState.style.display = "none";
+        gateError.style.display = "none";
+        $("btnAccess").disabled = false;
+        gateAction.querySelector(".gateHint").textContent = message || "Clique em acessar para iniciar.";
+      } else if(mode === "loading"){
+        gate.style.display = "flex";
+        $("appWrap").style.display = "none";
+        gateAction.style.display = "none";
         gateState.style.display = "flex";
         gateError.style.display = "none";
+        $("btnAccess").disabled = true;
         gate.querySelector(".gateLabel").textContent = message || "Validando sessão...";
       } else if(mode === "ready") {
+        gateAction.style.display = "none";
         gateState.style.display = "flex";
         gateError.style.display = "none";
         gate.querySelector(".gateLabel").textContent = message || "Sessão validada";
       } else if(mode === "error"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
+        gateAction.style.display = "none";
         gateState.style.display = "none";
         gateError.style.display = "flex";
         gateErrorMsg.textContent = message || "Sua conta não possui permissão.";
+        $("btnAccess").disabled = false;
       }
     }
     function revealAppShell(){
@@ -1213,6 +1250,7 @@
     // ===================== INIT =====================
     async function init(){
       setGateState("loading", "Validando sessão...");
+      resetSessionUi();
       try{
         const data = await gsRun("apiGetMe");
         state.me = data.me;
@@ -1259,6 +1297,24 @@
       }
     }
 
+    function resetSessionUi(){
+      state.sessionReady = false;
+      state.me = null;
+      state.role = null;
+      state.setor = null;
+      $("roleTag").textContent = "—";
+      $("meLine").textContent = "Aguardando acesso...";
+      $("leftTitle").textContent = "Tickets";
+      $("rightTitle").textContent = "Lista";
+      $("tabs").innerHTML = "";
+      $("mobileNav").innerHTML = "";
+      $("createBox").style.display = "none";
+      $("admBox").style.display = "none";
+      $("admFilters").style.display = "none";
+      $("recepBox").style.display = "none";
+      stopKiosk();
+    }
+
     function startKiosk(){
       stopKiosk();
       $("kioskState").textContent = "ON";
@@ -1272,6 +1328,7 @@
 
     // ===================== EVENTS =====================
     $("btnRetry").onclick = ()=> init();
+    $("btnAccess").onclick = ()=> init();
 
     $("btnRefresh").onclick = ()=> refreshTickets();
     $("btnApplyFilters").onclick = ()=> refreshTickets();
@@ -1387,7 +1444,7 @@
     };
 
     // init
-    init();
+    setGateState("idle", "Clique em acessar para iniciar.");
   </script>
 </body>
 </html>
