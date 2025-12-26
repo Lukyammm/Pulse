@@ -189,6 +189,29 @@ function apiLogin(email, senha) {
   });
 }
 
+function apiLoginSession() {
+  return wrap_(function () {
+    const repo = sheetRepo_(getDb_());
+    const email = String(getUserEmail_() || "").trim().toLowerCase();
+
+    if (!email) throw new Error("Não consegui ler seu e-mail do Google. Faça login na sua conta.");
+
+    const user = repo.users.getByEmail(email);
+    if (!user) throw new Error("Seu e-mail não está cadastrado no USERS.");
+    if (!user.ativo) throw new Error("Usuário inativo.");
+    if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(user.perfil)) throw new Error("Perfil inválido no USERS.");
+
+    const token = createSession_(user.email, {
+      perfil: user.perfil,
+      setor: user.setor,
+      nome: user.nome,
+      isGuest: false,
+    });
+    const me = sanitizeUser_(user);
+    return { token, me, profile: me.perfil, setor: me.setor, now: new Date().toISOString() };
+  });
+}
+
 function apiGuestAccess() {
   return wrap_(function () {
     const guest = {
