@@ -40,7 +40,38 @@
       letter-spacing:.1px;
       font-size:15px;
       line-height:1.6;
+      padding-top:72px;
     }
+    .topLoginBar{
+      position:fixed;
+      top:0; left:0; right:0;
+      padding:12px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      background:linear-gradient(120deg, rgba(255,255,255,.92), rgba(240,244,255,.95));
+      border-bottom:1px solid rgba(10,132,255,.12);
+      box-shadow:0 18px 42px rgba(15,23,42,.12);
+      z-index:20;
+      backdrop-filter: blur(12px);
+    }
+    .topLoginBrand{display:flex; align-items:center; gap:10px; font-weight:800; color:#0b254a; letter-spacing:-0.2px;}
+    .topLoginBrand .dot{box-shadow:0 10px 26px rgba(10,132,255,.25);}
+    .topLoginBtn{
+      padding:11px 18px;
+      border-radius:14px;
+      border:1px solid rgba(10,132,255,.2);
+      background:linear-gradient(135deg, #0a84ff, #0f9f8e);
+      color:#ffffff;
+      font-weight:800;
+      letter-spacing:0.1px;
+      box-shadow:0 16px 36px rgba(10,132,255,.25);
+      cursor:pointer;
+      transition:.15s transform, .15s box-shadow, .15s opacity;
+    }
+    .topLoginBtn:hover{transform:translateY(-1px); box-shadow:0 20px 44px rgba(10,132,255,.28);}
+    .topLoginBtn:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none;}
     .gate{
       min-height:100vh;
       display:flex;
@@ -295,6 +326,10 @@
 </head>
 
 <body>
+  <div class="topLoginBar">
+    <div class="topLoginBrand"><div class="dot"></div><div>Pulse</div></div>
+    <button class="topLoginBtn" id="btnTopLogin">Entrar</button>
+  </div>
   <div id="gate" class="gate">
     <div class="gateCard">
       <div class="gateBrand">
@@ -306,10 +341,10 @@
       </div>
       <div id="gateAction" class="gateAction">
         <div class="gateLabel">Acessar sistema</div>
-        <div class="gateHint">Clique em acessar para validar sua sessão.</div>
-        <div class="row stackMobile">
-          <button class="btn primary" id="btnAccess">Acessar</button>
-        </div>
+        <div class="gateHint">Informe seu e-mail e senha cadastrados no USERS.</div>
+        <div class="field"><label>E-mail</label><input id="loginEmail" placeholder="email@dominio.com" /></div>
+        <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••" /></div>
+        <div class="row stackMobile"><button class="btn primary" id="btnAccess">Entrar</button></div>
       </div>
       <div id="gateState" class="gateState">
         <div class="gatePulse"></div>
@@ -587,12 +622,13 @@
 
             <div class="hr"></div>
 
-            <div class="card" style="box-shadow:none;">
+                <div class="card" style="box-shadow:none;">
               <div class="hd"><b>Novo / Editar</b><span class="muted" style="font-size:12px;">upsert</span></div>
               <div class="bd">
                 <div style="display:grid;grid-template-columns: 1fr 1fr; gap:12px;">
                   <div class="field"><label>Email</label><input id="uEmail" placeholder="email@dominio.com" /></div>
                   <div class="field"><label>Nome</label><input id="uNome" placeholder="Nome" /></div>
+                  <div class="field"><label>Senha</label><input id="uSenha" type="password" placeholder="senha (texto)" /></div>
                   <div class="field"><label>Perfil</label>
                     <select id="uPerfil">
                       <option value="ASSISTENCIA">ASSISTENCIA</option>
@@ -643,6 +679,7 @@
       audio: { unlocked: false, muted: false, ctx: null },
       seen: new Set(),
       newCount: 0,
+      authToken: null,
       view: "list", // list | detail | dash | users
       charts: { status:null, hour:null, setor:null, cancel:null },
       sessionReady: false,
@@ -662,6 +699,8 @@
       const gateAction = $("gateAction");
       const gateError = $("gateError");
       const gateErrorMsg = $("gateErrorMsg");
+      const topBtn = $("btnTopLogin");
+      if(topBtn) topBtn.disabled = (mode === "loading");
       if(mode === "idle"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
@@ -669,7 +708,7 @@
         gateState.style.display = "none";
         gateError.style.display = "none";
         $("btnAccess").disabled = false;
-        gateAction.querySelector(".gateHint").textContent = message || "Clique em acessar para iniciar.";
+        gateAction.querySelector(".gateHint").textContent = message || "Preencha e-mail e senha para entrar.";
       } else if(mode === "loading"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
@@ -697,6 +736,8 @@
       state.sessionReady = true;
       $("gate").style.display = "none";
       $("appWrap").style.display = "block";
+      const topBar = document.querySelector(".topLoginBar");
+      if(topBar) topBar.style.display = "none";
     }
     function setUpdating(isUpd, text){
       $("updTag").style.borderColor = isUpd ? "rgba(10,132,255,.35)" : "var(--line)";
@@ -790,6 +831,7 @@
     // ===================== API WRAPPER =====================
     function gsRun(fn, ...args){
       return new Promise((resolve, reject)=>{
+        const finalArgs = fn === "apiLogin" ? args : [state.authToken, ...args];
         google.script.run
           .withSuccessHandler((res)=>{
             if(!res || res.ok !== true){
@@ -801,7 +843,7 @@
           })
           .withFailureHandler((e)=>{
             reject(new Error(e && e.message ? e.message : String(e)));
-          })[fn](...args);
+          })[fn](...finalArgs);
       });
     }
 
@@ -1196,6 +1238,7 @@
         el.querySelector("button").onclick = ()=>{
           $("uEmail").value = u.email;
           $("uNome").value = u.nome || "";
+          $("uSenha").value = u.senha || "";
           $("uPerfil").value = u.perfil;
           $("uSetor").value = u.setor || "";
           $("uAtivo").value = String(!!u.ativo);
@@ -1211,6 +1254,7 @@
         const obj = {
           email: normalizeStr($("uEmail").value).toLowerCase(),
           nome: normalizeStr($("uNome").value),
+          senha: $("uSenha").value,
           perfil: $("uPerfil").value,
           setor: normalizeStr($("uSetor").value),
           ativo: $("uAtivo").value === "true"
@@ -1249,63 +1293,79 @@
 
     // ===================== INIT =====================
     async function init(){
-      setGateState("loading", "Validando sessão...");
+      const email = normalizeStr($("loginEmail").value).toLowerCase();
+      const senha = String($("loginPass").value || "");
+      if(!email || !senha){
+        toast("Login", "Preencha e-mail e senha.");
+        setGateState("idle", "Preencha e-mail e senha para entrar.");
+        return;
+      }
+
+      setGateState("loading", "Validando login...");
       resetSessionUi();
       try{
-        const data = await gsRun("apiGetMe");
+        const data = await gsRun("apiLogin", email, senha);
+        state.authToken = data.token;
         state.me = data.me;
         state.role = data.profile;
         state.setor = data.setor;
 
-        setGateState("ready", "Sessão validada");
+        setGateState("ready", "Login validado");
         revealAppShell();
 
-        setUpdating(true, "Carregando sessão...");
-        setOnline(true);
-
-        $("roleTag").textContent = state.role;
-        $("meLine").textContent = `${state.me.email} • ${state.role} • setor: ${state.setor}`;
-        $("leftTitle").textContent = state.role==="ADM" ? "Gestão" : "Tickets";
-        $("rightTitle").textContent = "Lista";
-
-        $("createBox").style.display = (state.role==="ASSISTENCIA" || state.role==="ADM") ? "block" : "none";
-        $("admBox").style.display = (state.role==="ADM") ? "block" : "none";
-        $("admFilters").style.display = (state.role==="ADM") ? "block" : "none";
-        $("recepBox").style.display = (state.role==="RECEPCAO") ? "block" : "none";
-
-        // kiosk/poll para recepção
-        if(state.role==="RECEPCAO"){
-          // tenta ler poll no backend via config? aqui usamos default e mostramos.
-          $("pollMs").textContent = String(state.pollMs);
-          startKiosk();
-        } else {
-          stopKiosk();
-        }
-
-        setTabs();
-        showView("list");
-
-        setUpdating(false, "Pronto");
-        await refreshTickets();
-
+        await bootstrapSession();
       }catch(e){
         setUpdating(false, "Falha");
         setOnline(false);
+        state.authToken = null;
         setGateState("error", e.message);
         toast("Acesso negado", e.message);
         $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e ativo.";
       }
     }
 
+    async function bootstrapSession(){
+      setUpdating(true, "Carregando sessão...");
+      setOnline(true);
+
+      $("roleTag").textContent = state.role;
+      $("meLine").textContent = `${state.me.email} • ${state.role} • setor: ${state.setor}`;
+      $("leftTitle").textContent = state.role==="ADM" ? "Gestão" : "Tickets";
+      $("rightTitle").textContent = "Lista";
+
+      $("createBox").style.display = (state.role==="ASSISTENCIA" || state.role==="ADM") ? "block" : "none";
+      $("admBox").style.display = (state.role==="ADM") ? "block" : "none";
+      $("admFilters").style.display = (state.role==="ADM") ? "block" : "none";
+      $("recepBox").style.display = (state.role==="RECEPCAO") ? "block" : "none";
+
+      // kiosk/poll para recepção
+      if(state.role==="RECEPCAO"){
+        $("pollMs").textContent = String(state.pollMs);
+        startKiosk();
+      } else {
+        stopKiosk();
+      }
+
+      setTabs();
+      showView("list");
+
+      setUpdating(false, "Pronto");
+      await refreshTickets();
+    }
+
     function resetSessionUi(){
       state.sessionReady = false;
+      state.authToken = null;
       state.me = null;
       state.role = null;
       state.setor = null;
+      state.seen = new Set();
+      state.newCount = 0;
       $("roleTag").textContent = "—";
       $("meLine").textContent = "Aguardando acesso...";
       $("leftTitle").textContent = "Tickets";
       $("rightTitle").textContent = "Lista";
+      $("newBadge").textContent = "0";
       $("tabs").innerHTML = "";
       $("mobileNav").innerHTML = "";
       $("createBox").style.display = "none";
@@ -1313,6 +1373,8 @@
       $("admFilters").style.display = "none";
       $("recepBox").style.display = "none";
       stopKiosk();
+      const topBar = document.querySelector(".topLoginBar");
+      if(topBar) topBar.style.display = "flex";
     }
 
     function startKiosk(){
@@ -1327,8 +1389,9 @@
     }
 
     // ===================== EVENTS =====================
-    $("btnRetry").onclick = ()=> init();
+    $("btnRetry").onclick = ()=> setGateState("idle", "Tente novamente informando e-mail e senha.");
     $("btnAccess").onclick = ()=> init();
+    $("btnTopLogin").onclick = ()=> init();
 
     $("btnRefresh").onclick = ()=> refreshTickets();
     $("btnApplyFilters").onclick = ()=> refreshTickets();
@@ -1444,7 +1507,7 @@
     };
 
     // init
-    setGateState("idle", "Clique em acessar para iniciar.");
+    setGateState("idle", "Informe seu e-mail e senha para entrar.");
   </script>
 </body>
 </html>
