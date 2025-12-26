@@ -1,31 +1,33 @@
-# Pulse (WebApp de Solicitação de Pulseiras)
+# Pulse WebApp (Solicitação de Pulseiras)
 
 ## 1. Passo a passo de instalação
-1. Abra o Google Drive e crie uma nova planilha chamada **Pulse**.
-2. No menu `Extensões > App Script`, substitua o conteúdo do projeto pelos arquivos `Code.gs` e `Index.html` deste repositório.
-3. Clique em **Publicar > Implantar como aplicativo da Web**.
-   - Execute o aplicativo como: *Usuário que acessa*.
-   - Quem pode acessar: **Somente na sua organização** (Workspace).
-4. Salve a implantação e copie a URL do WebApp para uso interno.
-5. Na planilha, rode o menu **Pulseiras > ✅ Setup** para criar abas e cabeçalhos.
-6. Rode **Pulseiras > ➕ Seed Admin** para se registrar como ADM inicial.
+1. Crie uma planilha Google chamada **Pulse**.
+2. Em `Extensões > App Script`, substitua o projeto pelos arquivos deste repositório (`backend.gs`, `auth.gs`, `permissions.gs`, `data.gs`, `ui.html`, `css.css`, `js.js`).
+3. Publique em `Implantar > Implantação nova` como **Aplicativo da Web**:
+   - Executar como: **Usuário que acessa**.
+   - Quem pode acessar: **Sua organização**.
+4. Abra a URL do WebApp e confirme que a tela inicial exibe apenas o estado "Sistema aguardando acesso".
+5. Rode o menu `Pulse WebApp > Setup` (se container-bound) ou execute a função `ensureSetup_()` para criar abas e cabeçalhos automaticamente.
+6. A conta `admin@local` é criada apenas na primeira execução com senha `admin123`; altere imediatamente pelo backend (atualize hash na aba `USUARIOS`).
 
 ## 2. Configuração de permissões
-- O WebApp deve estar em um domínio Google Workspace; emails externos não acessam.
-- A implantação precisa rodar **como o usuário que acessa** para que o backend valide o email real.
-- Aba `USERS` controla o acesso: campos `email`, `perfil` (`ASSISTENCIA`, `RECEPCAO`, `ADM`), `setor`, `ativo`.
-- Perfis são respeitados no backend: ASSISTÊNCIA só vê/atualiza o que criou no setor; RECEPÇÃO vê fila; ADM vê tudo.
+- As abas criadas são: `USUARIOS`, `SOLICITACOES`, `HISTORICO_STATUS`, `LOGS`, `CONFIG`.
+- Perfis disponíveis: `ASSISTENCIA`, `RECEPCAO`, `ADM`.
+- Backend valida todo acesso: usuários sem `ativo=true` ou inexistentes são bloqueados.
+- Sessões duram 30 minutos (cache) e são renovadas a cada chamada.
+- O front-end apenas monta a UI conforme perfil retornado; permissões reais são checadas no servidor.
 
 ## 3. Funções principais
-- `setup()`: cria abas, headers e configura valores padrão.
-- `seedMeAsAdmin()`: registra o usuário atual como ADM ativo.
-- `apiGetMe()`: retorna o contexto autenticado e o perfil para o front.
-- `apiCreateTicket()`, `apiListTickets()`, `apiUpdateStatus()`, `apiCancelTicket()`: CRUD seguro de tickets com regras por perfil.
-- `apiDashboard()`: entrega KPIs filtrados conforme o perfil (ADM completo; Recepção geral; Assistência somente setor).
-- `apiListUsers()`, `apiUpsertUser()`, `apiConfigGet()`, `apiConfigSet()`: gestão restrita ao perfil ADM.
+- `ensureSetup_()`: cria abas com cabeçalhos corretos e congela linhas de título.
+- `api_login(email, senha)`: autentica com hash SHA-256 salgado e retorna token de sessão.
+- `api_createSolicitacao(payload, token)`: criação restrita a ASSISTENCIA/ADM.
+- `api_listSolicitacoes(token)`: retorna solicitações permitidas pelo perfil (próprias ou todas).
+- `api_atualizarStatus(payload, token)`: altera status conforme matriz de permissões.
+- `api_dashboard(token)`: KPIs de ADM.
+- `api_logout(token)`: encerra sessão removendo token do cache.
 
 ## 4. Limitações conhecidas
-- É necessário estar logado em uma conta do domínio para obter o email via `Session.getActiveUser`.
-- Não há testes automatizados; valide o fluxo em um ambiente de homologação antes de produção.
-- Sons de notificação dependem de autorização do navegador para áudio.
-- O cache de dashboard é em planilha (`DASH_CACHE`); limpe manualmente se alterar cabeçalhos.
+- Para obter o email real, o WebApp deve rodar em domínio Workspace com execução como usuário que acessa.
+- A senha inicial `admin123` precisa ser trocada manualmente atualizando `senha_hash` para o novo hash (use `hashPassword_()` via editor).
+- Não há testes automatizados; valide em ambiente controlado.
+- Sons/alertas não são carregados (implementação focada em backend seguro e UI Apple-like).

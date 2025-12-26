@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><?= APP_NAME ?></title>
+    <style><?!= include('css'); ?></style>
+  </head>
+  <body class="app-body">
+    <div id="app" class="app-shell">
+      <div id="waiting" class="waiting-screen">
+        <div class="pulse-dot" id="pulseDot"></div>
+        <p class="waiting-text">Sistema aguardando acesso</p>
+        <button class="btn primary" id="btnOpenLogin">ENTRAR</button>
+      </div>
+
+      <div id="loginModal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Entrar</h2>
+            <button class="icon-btn" id="closeLogin">×</button>
+          </div>
+          <div class="modal-body">
+            <label>Email</label>
+            <input type="email" id="loginEmail" placeholder="seu.email@exemplo.com" />
+            <label>Senha</label>
+            <input type="password" id="loginSenha" placeholder="••••••••" />
+            <button class="btn primary full" id="btnLogin">Acessar</button>
+            <div id="loginFeedback" class="feedback"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="shell" class="hidden">
+        <header class="topbar">
+          <div>
+            <h1><?= APP_NAME ?></h1>
+            <small id="profileLabel"></small>
+          </div>
+          <button class="btn ghost" id="btnLogout">Sair</button>
+        </header>
+
+        <main id="content" class="content"></main>
+
+        <nav id="bottomNav" class="bottom-nav">
+          <button data-tab="home" class="nav-btn active">Início</button>
+          <button data-tab="solicitacoes" class="nav-btn">Solicitações</button>
+          <button data-tab="dashboard" class="nav-btn">Dashboard</button>
+        </nav>
+      </div>
+    </div>
+    <script><?!= include('js'); ?></script>
+  </body>
+</html>
