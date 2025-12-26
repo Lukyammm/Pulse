@@ -32,3 +32,7 @@
 - Não há testes automatizados; valide em ambiente controlado.
 - Sons/alertas não são carregados (implementação focada em backend seguro e UI Apple-like).
 - O layout mobile foi otimizado para telas menores, mas continua com a mesma base funcional do desktop.
+
+## 5. Notas de UI
+- A lista de solicitações ocupa toda a largura por padrão; o botão **➕ Nova solicitação** abre um painel lateral (drawer) com o formulário completo, com campos agrupados em duas colunas para preenchimento mais rápido.
+- Quando não há tickets, a lista exibe um estado vazio com instruções e CTA para criar a primeira solicitação (apenas para perfis com permissão de criação).
