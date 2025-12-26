@@ -351,10 +351,8 @@
         </div>
         <div class="loginCard" id="adminLogin" style="display:none">
           <b>Área do Administrador</b>
-          <span>Informe e-mail e senha cadastrados no USERS.</span>
-          <div class="field"><label>E-mail</label><input id="loginEmail" placeholder="email@dominio.com" /></div>
-          <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••" /></div>
-          <div class="row stackMobile"><button class="btn primary" id="btnAccess">Entrar</button></div>
+          <span>Use sua conta Google cadastrada no USERS e clique para entrar.</span>
+          <div class="row stackMobile"><button class="btn primary" id="btnAccess">Área do Administrador</button></div>
         </div>
       </div>
       <div id="gateState" class="gateState">
@@ -720,7 +718,7 @@
         gateError.style.display = "none";
         $("btnAssist").disabled = false;
         $("btnAccess").disabled = false;
-        $("assistHint").textContent = message || "Entre na assistência sem login ou abra a Área do Administrador.";
+        $("assistHint").textContent = message || "Entre na assistência sem login ou acesse a Área do Administrador com sua conta Google.";
       } else if(mode === "loading"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
@@ -1306,24 +1304,16 @@
 
     // ===================== INIT =====================
     async function loginAdmin(){
-      const email = normalizeStr($("loginEmail").value).toLowerCase();
-      const senha = String($("loginPass").value || "");
-      if(!email || !senha){
-        toast("Login", "Preencha e-mail e senha.");
-        setGateState("idle", "Para administração, informe e-mail e senha.");
-        return;
-      }
-
-      setGateState("loading", "Validando login...");
+      setGateState("loading", "Validando acesso da administração...");
       resetSessionUi();
       try{
-        const data = await gsRun("apiLogin", email, senha);
+        const data = await gsRun("apiLoginSession");
         state.authToken = data.token;
         state.me = data.me;
         state.role = data.profile;
         state.setor = data.setor;
 
-        setGateState("ready", "Login validado");
+        setGateState("ready", "Acesso liberado");
         revealAppShell();
 
         await bootstrapSession();
@@ -1333,7 +1323,7 @@
         state.authToken = null;
         setGateState("error", e.message);
         toast("Acesso negado", e.message);
-        $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e ativo.";
+        $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e usar sua conta Google.";
       }
     }
 
@@ -1428,10 +1418,10 @@
     // ===================== EVENTS =====================
     function showAdminLogin(){
       $("adminLogin").style.display = "flex";
-      $("assistHint").textContent = "Área do Administrador: informe e-mail e senha.";
+      $("assistHint").textContent = "Área do Administrador: clique para entrar com sua conta Google cadastrada.";
     }
 
-    $("btnRetry").onclick = ()=> setGateState("idle", "Tente novamente. Para administração, informe e-mail e senha.");
+    $("btnRetry").onclick = ()=> setGateState("idle", "Tente novamente. Para administração, use sua conta Google cadastrada.");
     $("btnAccess").onclick = ()=> loginAdmin();
     $("btnTopLogin").onclick = ()=> { showAdminLogin(); loginAdmin(); };
     $("btnAdminArea").onclick = ()=> { showAdminLogin(); };
