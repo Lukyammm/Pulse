@@ -41,6 +41,38 @@
       font-size:15px;
       line-height:1.6;
     }
+    .gate{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px 16px;
+    }
+    .gateCard{
+      width:100%;
+      max-width:520px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(10,132,255,.16);
+      border-radius:26px;
+      padding:28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    .gateBrand{display:flex; align-items:center; gap:12px;}
+    .gateTitle{font-weight:800; font-size:20px; letter-spacing:-0.3px;}
+    .gateSubtitle{color:var(--muted); font-size:13px;}
+    .gateState{display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--line); border-radius:18px; background:linear-gradient(145deg, rgba(10,132,255,.08), rgba(255,255,255,.96)); box-shadow:0 10px 34px rgba(10,132,255,.12);}
+    .gateLabel{font-weight:700; font-size:14px; color:#0b254a;}
+    .gateHint{color:var(--muted); font-size:13px;}
+    .gatePulse{width:36px; height:36px; border-radius:50%; border:2px solid rgba(10,132,255,.15); display:grid; place-items:center; position:relative; overflow:hidden;}
+    .gatePulse::after{content:""; position:absolute; inset:4px; border-radius:50%; border:2px solid #0a84ff; opacity:.4; animation:pulse 1.6s infinite ease-in-out;}
+    @keyframes pulse{0%{transform:scale(.9); opacity:.6;}50%{transform:scale(1.05); opacity:1;}100%{transform:scale(.9); opacity:.4;}}
+    .dot{width:14px; height:14px; border-radius:50%; background:linear-gradient(145deg, #0a84ff, #0f9f8e); box-shadow:0 8px 18px rgba(10,132,255,.25);}
+    .gateError{border:1px solid rgba(217,31,17,.25); background:rgba(217,31,17,.08); padding:14px; border-radius:18px; display:flex; flex-direction:column; gap:8px;}
+    .gateBadge{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:#7c1212; font-weight:800;}
     .wrap{max-width:1180px;margin:0 auto;padding:0 24px 32px;}
     .topbar{
       display:flex; gap:14px; align-items:center; justify-content:space-between;
@@ -221,46 +253,57 @@
     }
     .tab.active{border-color:rgba(10,132,255,.45); color:var(--text); background:rgba(10,132,255,.12);}
 
+    .mobileNav{display:none; gap:8px;}
+    .mobileNav .tab{flex:1; text-align:center;}
+
     @media (max-width: 980px){
-      .heroCard{grid-template-columns:1fr;}
-      .hero .nav{flex-direction:column; align-items:flex-start;}
       .grid{grid-template-columns: 1fr;}
       .detailGrid{grid-template-columns:1fr;}
       .kpis{grid-template-columns: repeat(2,1fr);}
-      .topbar{position:static;}
+      .topbar{position:static; flex-direction:column; align-items:flex-start; gap:8px;}
+      .row{flex-wrap:wrap;}
+    }
+    @media (max-width: 720px){
+      body{font-size:14px;}
+      .wrap{padding:0 14px 90px;}
+      .grid{gap:10px;}
+      .card{border-radius:16px;}
+      .tabs{display:none;}
+      .mobileNav{display:flex; position:fixed; left:14px; right:14px; bottom:14px; background:#f8fafc; padding:6px; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.14); z-index:20;}
+      .topbar{background:rgba(255,255,255,.9); border-radius:16px;}
+      .detailGrid{gap:10px;}
+      #mobileDrawerSpacer{height:72px;}
+      .topbar .row{width:100%; justify-content:flex-start;}
     }
   </style>
 </head>
 
 <body>
-  <div class="heroWrap">
-    <div class="hero">
-      <div class="nav">
-        <div class="logo">Pulse • Atendimento claro</div>
-        <div class="row">
-          <span class="hero hint">Login dedicado para Recepção e ADM.</span>
-          <button class="btn glass" id="btnHeroAdm">ADM • Login</button>
+  <div id="gate" class="gate">
+    <div class="gateCard">
+      <div class="gateBrand">
+        <div class="dot"></div>
+        <div>
+          <div class="gateTitle">Pulse</div>
+          <div class="gateSubtitle">Acesso seguro e perfilado</div>
         </div>
       </div>
-      <div class="heroCard">
+      <div id="gateState" class="gateState">
+        <div class="gatePulse"></div>
         <div>
-          <span class="eyebrow">Assistência</span>
-          <h1>Acessar sistema</h1>
-          <p>Fluxo direto para abrir solicitações de pulseira, com foco em clareza e velocidade.</p>
-          <div class="ctaRow">
-            <button class="btn teal" id="btnHeroAssist">Acessar sistema</button>
-            <span class="ctaNote">Clique para entrar como assistência. ADM/Recepção usam o botão superior.</span>
-          </div>
+          <div class="gateLabel">Validando sessão...</div>
+          <div class="gateHint">Aguarde, o sistema só carrega após autenticar.</div>
         </div>
-        <div class="loginCard">
-          <b>ADM</b>
-          <span>Login moderno para administração ou recepção. Valide suas credenciais e siga para o painel completo.</span>
-          <button class="btn primary" id="btnHeroAdm2">Ir para login ADM</button>
-        </div>
+      </div>
+      <div id="gateError" class="gateError" style="display:none">
+        <div class="gateBadge">Acesso bloqueado</div>
+        <div class="gateHint" id="gateErrorMsg">Sua conta não possui permissão.</div>
+        <button class="btn primary" id="btnRetry">Tentar novamente</button>
       </div>
     </div>
   </div>
-  <div class="wrap" id="appWrap">
+
+  <div class="wrap" id="appWrap" style="display:none">
     <div class="topbar">
       <div class="brand">
         <b><?= APP_NAME ?> <span class="muted">v<?= APP_VERSION ?></span></b>
@@ -286,6 +329,7 @@
         </div>
         <div class="bd">
           <div class="tabs" id="tabs"></div>
+          <div class="mobileNav" id="mobileNav"></div>
           <div class="hr"></div>
 
           <div class="field">
@@ -557,6 +601,7 @@
       </div>
     </div>
   </div>
+  <div id="mobileDrawerSpacer"></div>
 
   <div class="toast" id="toast"></div>
 
@@ -576,7 +621,8 @@
       seen: new Set(),
       newCount: 0,
       view: "list", // list | detail | dash | users
-      charts: { status:null, hour:null, setor:null, cancel:null }
+      charts: { status:null, hour:null, setor:null, cancel:null },
+      sessionReady: false,
     };
 
     const $ = (id) => document.getElementById(id);
@@ -586,6 +632,34 @@
       $("netPill").style.borderColor = ok ? "rgba(73,212,157,.35)" : "rgba(255,93,93,.35)";
       $("netTxt").textContent = ok ? "Online" : "Offline";
       $("netPill").querySelector(".spin").style.display = ok ? "none" : "inline-block";
+    }
+    function setGateState(mode, message){
+      const gate = $("gate");
+      const gateState = $("gateState");
+      const gateError = $("gateError");
+      const gateErrorMsg = $("gateErrorMsg");
+      if(mode === "loading"){
+        gate.style.display = "flex";
+        $("appWrap").style.display = "none";
+        gateState.style.display = "flex";
+        gateError.style.display = "none";
+        gate.querySelector(".gateLabel").textContent = message || "Validando sessão...";
+      } else if(mode === "ready") {
+        gateState.style.display = "flex";
+        gateError.style.display = "none";
+        gate.querySelector(".gateLabel").textContent = message || "Sessão validada";
+      } else if(mode === "error"){
+        gate.style.display = "flex";
+        $("appWrap").style.display = "none";
+        gateState.style.display = "none";
+        gateError.style.display = "flex";
+        gateErrorMsg.textContent = message || "Sua conta não possui permissão.";
+      }
+    }
+    function revealAppShell(){
+      state.sessionReady = true;
+      $("gate").style.display = "none";
+      $("appWrap").style.display = "block";
     }
     function setUpdating(isUpd, text){
       $("updTag").style.borderColor = isUpd ? "rgba(10,132,255,.35)" : "var(--line)";
@@ -696,6 +770,11 @@
 
     // ===================== VIEWS =====================
     function showView(name){
+      if(!state.sessionReady) return;
+      if(["dash","users"].includes(name) && state.role!=="ADM"){
+        toast("Permissão", "Somente ADM pode acessar esta área.");
+        return;
+      }
       state.view = name;
       $("listView").style.display = (name==="list") ? "block" : "none";
       $("detailView").style.display = (name==="detail") ? "block" : "none";
@@ -705,7 +784,6 @@
 
     function setTabs(){
       const tabs = $("tabs");
-      tabs.innerHTML = "";
       const items = [];
 
       // sempre: tickets
@@ -717,6 +795,13 @@
         items.push({key:"users", label:"Usuários"});
       }
 
+      renderNavTabs(items, tabs);
+      renderNavTabs(items, $("mobileNav"));
+    }
+
+    function renderNavTabs(items, container){
+      if(!container) return;
+      container.innerHTML = "";
       items.forEach(it=>{
         const el = document.createElement("div");
         el.className = "tab" + (state.view===it.key ? " active" : "");
@@ -729,7 +814,7 @@
             setTabs();
           }
         };
-        tabs.appendChild(el);
+        container.appendChild(el);
       });
     }
 
@@ -1127,12 +1212,18 @@
 
     // ===================== INIT =====================
     async function init(){
-      setUpdating(true, "Carregando sessão...");
+      setGateState("loading", "Validando sessão...");
       try{
         const data = await gsRun("apiGetMe");
         state.me = data.me;
         state.role = data.profile;
         state.setor = data.setor;
+
+        setGateState("ready", "Sessão validada");
+        revealAppShell();
+
+        setUpdating(true, "Carregando sessão...");
+        setOnline(true);
 
         $("roleTag").textContent = state.role;
         $("meLine").textContent = `${state.me.email} • ${state.role} • setor: ${state.setor}`;
@@ -1162,6 +1253,7 @@
       }catch(e){
         setUpdating(false, "Falha");
         setOnline(false);
+        setGateState("error", e.message);
         toast("Acesso negado", e.message);
         $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e ativo.";
       }
@@ -1179,17 +1271,7 @@
     }
 
     // ===================== EVENTS =====================
-    function scrollToApp(){
-      const target = document.getElementById("appWrap");
-      if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
-    }
-    const admLogin = ()=>{
-      scrollToApp();
-      toast("ADM", "Use sua conta ADM ou recepção para entrar.");
-    };
-    $("btnHeroAssist").onclick = scrollToApp;
-    $("btnHeroAdm").onclick = admLogin;
-    $("btnHeroAdm2").onclick = admLogin;
+    $("btnRetry").onclick = ()=> init();
 
     $("btnRefresh").onclick = ()=> refreshTickets();
     $("btnApplyFilters").onclick = ()=> refreshTickets();
