@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><?= APP_NAME ?> • WebApp</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#11131a;
+      --card2:#0f1117;
+      --text:#e9ecf1;
+      --muted:#a7afbd;
+      --line:rgba(255,255,255,.08);
+      --accent:#6ea8fe;
+      --ok:#49d49d;
+      --warn:#ffd166;
+      --bad:#ff5d5d;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(110,168,254,.15), transparent 55%),
+                  radial-gradient(1000px 900px at 80% 10%, rgba(73,212,157,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family:var(--font);
+      letter-spacing:.2px;
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:24px;}
+    .topbar{
+      display:flex; gap:14px; align-items:center; justify-content:space-between;
+      padding:16px 18px; border:1px solid var(--line); background:rgba(17,19,26,.75);
+      border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px);
+      position:sticky; top:10px; z-index:10;
+    }
+    .brand{display:flex; flex-direction:column; gap:2px;}
+    .brand b{font-size:15px;}
+    .brand span{font-size:12px;color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border:1px solid var(--line); border-radius:999px;
+      background:rgba(255,255,255,.03); color:var(--muted); font-size:12px;
+    }
+    .row{display:flex; gap:14px; align-items:center;}
+    .btn{
+      appearance:none; border:1px solid var(--line); color:var(--text);
+      background:rgba(255,255,255,.04);
+      padding:10px 12px; border-radius:12px; cursor:pointer;
+      transition:.15s transform, .15s background, .15s border;
+      font-weight:600; font-size:13px;
+    }
+    .btn:hover{transform: translateY(-1px); background:rgba(255,255,255,.06);}
+    .btn.primary{border-color:rgba(110,168,254,.35); background:rgba(110,168,254,.10);}
+    .btn.ok{border-color:rgba(73,212,157,.35); background:rgba(73,212,157,.10);}
+    .btn.bad{border-color:rgba(255,93,93,.35); background:rgba(255,93,93,.10);}
+    .btn.ghost{background:transparent;}
+    .btn:disabled{opacity:.5; cursor:not-allowed; transform:none;}
+
+    .grid{
+      margin-top:14px;
+      display:grid; grid-template-columns: 340px 1fr;
+      gap:14px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background: rgba(17,19,26,.65);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 16px; border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .card .hd b{font-size:14px;}
+    .card .bd{padding:14px 16px;}
+    .muted{color:var(--muted)}
+    .hr{height:1px; background:var(--line); margin:12px 0;}
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 9px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(255,255,255,.03);
+      font-size:12px; color:var(--muted);
+    }
+    .tag.new{border-color:rgba(255,209,102,.35); color:var(--warn); background:rgba(255,209,102,.08);}
+    .tag.ok{border-color:rgba(73,212,157,.35); color:var(--ok); background:rgba(73,212,157,.08);}
+    .tag.bad{border-color:rgba(255,93,93,.35); color:var(--bad); background:rgba(255,93,93,.08);}
+
+    .field{display:flex; flex-direction:column; gap:6px; margin-bottom:10px;}
+    label{font-size:12px; color:var(--muted);}
+    input, select, textarea{
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      outline:none;
+      font-size:13px;
+    }
+    textarea{min-height:90px; resize:vertical;}
+    input::placeholder{color:rgba(167,175,189,.6);}
+
+    .list{display:flex; flex-direction:column; gap:10px;}
+    .ticket{
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      background: rgba(15,17,23,.55);
+      padding:12px 12px;
+      cursor:pointer;
+      transition:.12s transform, .12s background;
+    }
+    .ticket:hover{transform: translateY(-1px); background: rgba(255,255,255,.05);}
+    .ticket.active{border-color:rgba(110,168,254,.45); background:rgba(110,168,254,.08);}
+    .ticket .t1{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+    .ticket b{font-size:13px;}
+    .ticket .sub{font-size:12px;color:var(--muted); margin-top:4px;}
+    .ticket .mini{font-size:11px;color:rgba(167,175,189,.9); margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;}
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:18px; height:18px; padding:0 6px;
+      border-radius:999px;
+      background: rgba(255,209,102,.18);
+      border:1px solid rgba(255,209,102,.35);
+      color:var(--warn);
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .detailGrid{display:grid; grid-template-columns: 1fr 320px; gap:14px;}
+    .kpis{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;}
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      padding:12px;
+    }
+    .kpi .v{font-size:18px; font-weight:800; margin-top:6px;}
+    .kpi .k{font-size:12px; color:var(--muted);}
+
+    .toast{
+      position: fixed; right: 14px; bottom: 14px; z-index: 9999;
+      display:flex; flex-direction:column; gap:10px;
+      max-width: 360px;
+    }
+    .toast .item{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(17,19,26,.88);
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      backdrop-filter: blur(10px);
+    }
+    .toast .item b{font-size:13px;}
+    .toast .item div{font-size:12px;color:var(--muted);margin-top:6px;}
+    .spin{display:inline-block; width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:var(--accent); animation: sp .8s linear infinite;}
+    @keyframes sp { to { transform: rotate(360deg);} }
+
+    .timeline{display:flex; flex-direction:column; gap:10px;}
+    .ev{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.03);
+    }
+    .ev .h{display:flex; justify-content:space-between; gap:10px; align-items:center;}
+    .ev .h b{font-size:12px;}
+    .ev .h span{font-size:11px;color:var(--muted);}
+    .ev pre{
+      margin:8px 0 0 0;
+      font-size:11px;
+      color:rgba(167,175,189,.95);
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .tabs{display:flex; gap:8px; flex-wrap:wrap;}
+    .tab{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-size:12px;
+      cursor:pointer;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .tab.active{border-color:rgba(110,168,254,.45); color:var(--text); background:rgba(110,168,254,.08);}
+
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr;}
+      .detailGrid{grid-template-columns:1fr;}
+      .kpis{grid-template-columns: repeat(2,1fr);}
+      .topbar{position:static;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <b><?= APP_NAME ?> <span class="muted">v<?= APP_VERSION ?></span></b>
+        <span id="meLine" class="muted">Carregando perfil...</span>
+      </div>
+
+      <div class="row">
+        <span class="pill" id="netPill"><span class="spin"></span> <span id="netTxt">Conectando...</span></span>
+        <span class="pill">Novos: <span class="badge" id="newBadge">0</span></span>
+        <button class="btn ghost" id="btnAudio">Habilitar áudio</button>
+        <button class="btn ghost" id="btnTestSound">Testar som</button>
+        <button class="btn ghost" id="btnMute">Silenciar</button>
+        <button class="btn" id="btnRefresh">Atualizar</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: NAV / ACTIONS -->
+      <div class="card">
+        <div class="hd">
+          <b id="leftTitle">Tickets</b>
+          <span class="tag" id="roleTag">—</span>
+        </div>
+        <div class="bd">
+          <div class="tabs" id="tabs"></div>
+          <div class="hr"></div>
+
+          <div class="field">
+            <label>Busca (prontuário / leito)</label>
+            <input id="q" placeholder="ex: 12345 ou 600.2" />
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="">Todos</option>
+              <option value="ABERTO">ABERTO</option>
+              <option value="RECEBIDO_PELA_RECEPCAO">RECEBIDO PELA RECEPÇÃO</option>
+              <option value="EM_PRODUCAO">EM PRODUÇÃO</option>
+              <option value="ENVIADO_A_CAMINHO">ENVIADO / A CAMINHO</option>
+              <option value="ENTREGUE_DEIXADO">ENTREGUE / DEIXADO</option>
+              <option value="RECEBIDO_PELA_ASSISTENCIA">RECEBIDO PELA ASSISTÊNCIA</option>
+              <option value="ENCERRADO">ENCERRADO</option>
+              <option value="CANCELADO">CANCELADO</option>
+            </select>
+          </div>
+
+          <div class="field" id="admFilters" style="display:none">
+            <label>Setor (ADM)</label>
+            <input id="fSetor" placeholder="ex: VASCULAR" />
+          </div>
+
+          <div class="field">
+            <label>Criança</label>
+            <select id="fCrianca">
+              <option value="">Todos</option>
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Período (criação)</label>
+            <div style="display:flex;gap:10px;">
+              <input id="fFrom" type="date" style="flex:1" />
+              <input id="fTo" type="date" style="flex:1" />
+            </div>
+          </div>
+
+          <div class="row">
+            <button class="btn primary" id="btnApplyFilters">Aplicar</button>
+            <button class="btn ghost" id="btnClearFilters">Limpar</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- ASSISTENCIA: criação -->
+          <div id="createBox" style="display:none">
+            <b style="font-size:13px;">Nova solicitação</b>
+            <div class="hr"></div>
+
+            <div class="field"><label>Nome do paciente *</label><input id="cNome" placeholder="Nome completo" /></div>
+            <div class="field"><label>Prontuário *</label><input id="cPront" placeholder="Número / código" /></div>
+            <div class="field"><label>Leito *</label><input id="cLeito" placeholder="ex: 600.1" /></div>
+            <div class="field"><label>Nascimento (DD/MM/AAAA) *</label><input id="cNasc" placeholder="ex: 10/06/2018" inputmode="numeric" /></div>
+
+            <div class="row" style="justify-content:space-between;">
+              <span class="tag"><input type="checkbox" id="cCrianca" /> <span>Criança</span></span>
+              <span class="muted" style="font-size:12px;">Campos * obrigatórios</span>
+            </div>
+
+            <div class="field" id="maeField" style="display:none">
+              <label>Nome da mãe *</label>
+              <input id="cMae" placeholder="Obrigatório se criança" />
+            </div>
+
+            <div class="row">
+              <button class="btn ok" id="btnCreate">Abrir solicitação</button>
+            </div>
+          </div>
+
+          <!-- ADM: gestão -->
+          <div id="admBox" style="display:none">
+            <div class="hr"></div>
+            <b style="font-size:13px;">Admin</b>
+            <div class="row" style="margin-top:10px;">
+              <button class="btn" id="btnOpenUsers">Usuários</button>
+              <button class="btn" id="btnOpenDashboard">Dashboard</button>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <button class="btn" id="btnExportCsv">Exportar CSV</button>
+            </div>
+          </div>
+
+          <!-- RECEPCAO: kiosk -->
+          <div id="recepBox" style="display:none">
+            <div class="hr"></div>
+            <b style="font-size:13px;">Recepção</b>
+            <div class="row" style="margin-top:10px;">
+              <span class="tag new">Kiosk: <span id="kioskState">ON</span></span>
+              <span class="tag">Poll: <span id="pollMs">—</span>ms</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: LIST + DETAILS -->
+      <div class="card">
+        <div class="hd">
+          <b id="rightTitle">Lista</b>
+          <span class="tag" id="updTag"><span class="spin"></span> <span id="updTxt">Carregando...</span></span>
+        </div>
+        <div class="bd">
+
+          <div id="listView">
+            <div class="list" id="ticketList"></div>
+          </div>
+
+          <div id="detailView" style="display:none">
+            <div class="detailGrid">
+              <div>
+                <div class="row" style="justify-content:space-between; align-items:flex-start;">
+                  <div>
+                    <b id="dTitle" style="font-size:16px;">Ticket</b>
+                    <div class="sub muted" id="dSub"></div>
+                  </div>
+                  <div class="row">
+                    <span class="tag" id="dStatus">—</span>
+                    <button class="btn ghost" id="btnBack">Voltar</button>
+                  </div>
+                </div>
+
+                <div class="hr"></div>
+
+                <div class="row" style="flex-wrap:wrap;" id="actionRow"></div>
+
+                <div class="hr"></div>
+
+                <b style="font-size:13px;">Timeline / Auditoria</b>
+                <div style="height:10px"></div>
+                <div class="timeline" id="timeline"></div>
+              </div>
+
+              <div>
+                <b style="font-size:13px;">Detalhes</b>
+                <div style="height:10px"></div>
+
+                <div class="kpi">
+                  <div class="k">Paciente</div>
+                  <div class="v" style="font-size:14px" id="iPaciente">—</div>
+                  <div class="hr"></div>
+                  <div class="k">Prontuário</div>
+                  <div class="v" style="font-size:14px" id="iPront">—</div>
+                  <div class="hr"></div>
+                  <div class="k">Leito</div>
+                  <div class="v" style="font-size:14px" id="iLeito">—</div>
+                  <div class="hr"></div>
+                  <div class="k">Nascimento</div>
+                  <div class="v" style="font-size:14px" id="iNasc">—</div>
+                  <div class="hr"></div>
+                  <div class="k">Criança</div>
+                  <div class="v" style="font-size:14px" id="iCrianca">—</div>
+                  <div id="maeBlock" style="display:none">
+                    <div class="hr"></div>
+                    <div class="k">Mãe</div>
+                    <div class="v" style="font-size:14px" id="iMae">—</div>
+                  </div>
+                </div>
+
+                <div class="hr"></div>
+
+                <div class="field">
+                  <label>Cancelar (motivo obrigatório)</label>
+                  <textarea id="cancelReason" placeholder="Descreva o motivo..."></textarea>
+                </div>
+                <button class="btn bad" id="btnCancel">Cancelar ticket</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DASHBOARD -->
+          <div id="dashView" style="display:none">
+            <div class="row" style="justify-content:space-between; align-items:flex-start;">
+              <div>
+                <b style="font-size:16px;">Dashboard</b>
+                <div class="muted" style="font-size:12px;">KPIs + gráficos (filtrados pelo que seu perfil pode ver).</div>
+              </div>
+              <button class="btn ghost" id="btnCloseDash">Fechar</button>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="kpis">
+              <div class="kpi"><div class="k">Total</div><div class="v" id="kTotal">—</div></div>
+              <div class="kpi"><div class="k">Abertos agora</div><div class="v" id="kOpen">—</div></div>
+              <div class="kpi"><div class="k">SLA total (%)</div><div class="v" id="kSla">—</div></div>
+              <div class="kpi"><div class="k">Média até Encerrar (min)</div><div class="v" id="kAvgClose">—</div></div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div style="display:grid;grid-template-columns: 1fr 1fr; gap:14px;">
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><b>Funil por status</b><span class="muted" style="font-size:12px;">contagem</span></div>
+                <div class="bd"><canvas id="chStatus"></canvas></div>
+              </div>
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><b>Pico por hora</b><span class="muted" style="font-size:12px;">criação</span></div>
+                <div class="bd"><canvas id="chHour"></canvas></div>
+              </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <div style="display:grid;grid-template-columns: 1fr 1fr; gap:14px;">
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><b>Top setores</b><span class="muted" style="font-size:12px;">top 10</span></div>
+                <div class="bd"><canvas id="chSetor"></canvas></div>
+              </div>
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><b>Cancelamentos</b><span class="muted" style="font-size:12px;">motivos</span></div>
+                <div class="bd"><canvas id="chCancel"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- USERS -->
+          <div id="usersView" style="display:none">
+            <div class="row" style="justify-content:space-between; align-items:flex-start;">
+              <div>
+                <b style="font-size:16px;">Usuários</b>
+                <div class="muted" style="font-size:12px;">Gerenciar USERS (ADM).</div>
+              </div>
+              <button class="btn ghost" id="btnCloseUsers">Fechar</button>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="card" style="box-shadow:none;">
+              <div class="hd"><b>Novo / Editar</b><span class="muted" style="font-size:12px;">upsert</span></div>
+              <div class="bd">
+                <div style="display:grid;grid-template-columns: 1fr 1fr; gap:12px;">
+                  <div class="field"><label>Email</label><input id="uEmail" placeholder="email@dominio.com" /></div>
+                  <div class="field"><label>Nome</label><input id="uNome" placeholder="Nome" /></div>
+                  <div class="field"><label>Perfil</label>
+                    <select id="uPerfil">
+                      <option value="ASSISTENCIA">ASSISTENCIA</option>
+                      <option value="RECEPCAO">RECEPCAO</option>
+                      <option value="ADM">ADM</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Setor</label><input id="uSetor" placeholder="ex: VASCULAR / GLOBAL" /></div>
+                  <div class="field"><label>Ativo</label>
+                    <select id="uAtivo">
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="height:10px"></div>
+                <button class="btn ok" id="btnSaveUser">Salvar</button>
+              </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <b style="font-size:13px;">Lista</b>
+            <div style="height:10px"></div>
+            <div class="list" id="usersList"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================== STATE =====================
+    const state = {
+      me: null,
+      role: null,
+      setor: null,
+      tickets: [],
+      selectedId: null,
+      selected: null,
+      selectedLogs: [],
+      kioskTimer: null,
+      pollMs: 4000,
+      audio: { unlocked: false, muted: false, ctx: null },
+      seen: new Set(),
+      newCount: 0,
+      view: "list", // list | detail | dash | users
+      charts: { status:null, hour:null, setor:null, cancel:null }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    // ===================== UI HELPERS =====================
+    function setOnline(ok){
+      $("netPill").style.borderColor = ok ? "rgba(73,212,157,.35)" : "rgba(255,93,93,.35)";
+      $("netTxt").textContent = ok ? "Online" : "Offline";
+      $("netPill").querySelector(".spin").style.display = ok ? "none" : "inline-block";
+    }
+    function setUpdating(isUpd, text){
+      $("updTag").style.borderColor = isUpd ? "rgba(110,168,254,.35)" : "rgba(255,255,255,.10)";
+      $("updTag").querySelector(".spin").style.display = isUpd ? "inline-block" : "none";
+      $("updTxt").textContent = text || (isUpd ? "Atualizando..." : "Pronto");
+    }
+    function toast(title, msg){
+      const box = $("toast");
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `<b>${escapeHtml(title)}</b><div>${escapeHtml(msg||"")}</div>`;
+      box.appendChild(el);
+      setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(8px)"; }, 4200);
+      setTimeout(()=>{ try{box.removeChild(el);}catch(e){} }, 5200);
+    }
+    function escapeHtml(s){
+      return String(s||"").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+    function fmtIso(iso){
+      if(!iso) return "—";
+      const d = new Date(iso);
+      if(isNaN(d.getTime())) return String(iso);
+      return d.toLocaleString("pt-BR");
+    }
+    function fmtBirth(iso){
+      if(!iso) return "—";
+      if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+        const [y,m,dd] = iso.split("-");
+        return `${dd}/${m}/${y}`;
+      }
+      return iso;
+    }
+    function normalizeStr(s){
+      return String(s||"").trim().replace(/\s+/g," ");
+    }
+    function maskBirthInput(){
+      const el = $("cNasc");
+      let v = el.value.replace(/[^\d]/g,"").slice(0,8);
+      if(v.length >= 5) el.value = v.replace(/^(\d{2})(\d{2})(\d{1,4}).*$/,"$1/$2/$3");
+      else if(v.length >= 3) el.value = v.replace(/^(\d{2})(\d{1,2}).*$/,"$1/$2");
+      else el.value = v;
+    }
+    function validateBirthDDMMYYYY(s){
+      s = String(s||"").trim();
+      const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if(!m) return false;
+      const dd = parseInt(m[1],10), mm=parseInt(m[2],10), yy=parseInt(m[3],10);
+      if(yy<1900||yy>2100||mm<1||mm>12) return false;
+      const max = new Date(yy,mm,0).getDate();
+      if(dd<1||dd>max) return false;
+      return true;
+    }
+
+    // ===================== AUDIO (beep) =====================
+    function ensureAudioUnlocked(){
+      if(state.audio.unlocked) return true;
+      try{
+        state.audio.ctx = state.audio.ctx || new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = state.audio.ctx;
+        // create a silent buffer to unlock
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.02);
+        state.audio.unlocked = true;
+        toast("Áudio", "Áudio habilitado (o navegador deixou).");
+        return true;
+      }catch(e){
+        toast("Áudio", "Não consegui habilitar áudio. Clique novamente.");
+        return false;
+      }
+    }
+    function beep(){
+      if(state.audio.muted) return;
+      if(!state.audio.unlocked) return;
+      try{
+        const ctx = state.audio.ctx || new (window.AudioContext || window.webkitAudioContext)();
+        state.audio.ctx = ctx;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.value = 0.07;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 0.10);
+      }catch(e){}
+    }
+
+    // ===================== API WRAPPER =====================
+    function gsRun(fn, ...args){
+      return new Promise((resolve, reject)=>{
+        google.script.run
+          .withSuccessHandler((res)=>{
+            if(!res || res.ok !== true){
+              const err = (res && res.error) ? res.error : "Erro desconhecido";
+              reject(new Error(err));
+              return;
+            }
+            resolve(res.data);
+          })
+          .withFailureHandler((e)=>{
+            reject(new Error(e && e.message ? e.message : String(e)));
+          })[fn](...args);
+      });
+    }
+
+    // ===================== VIEWS =====================
+    function showView(name){
+      state.view = name;
+      $("listView").style.display = (name==="list") ? "block" : "none";
+      $("detailView").style.display = (name==="detail") ? "block" : "none";
+      $("dashView").style.display = (name==="dash") ? "block" : "none";
+      $("usersView").style.display = (name==="users") ? "block" : "none";
+    }
+
+    function setTabs(){
+      const tabs = $("tabs");
+      tabs.innerHTML = "";
+      const items = [];
+
+      // sempre: tickets
+      items.push({key:"list", label:"Tickets"});
+
+      // ADM extras
+      if(state.role==="ADM"){
+        items.push({key:"dash", label:"Dashboard"});
+        items.push({key:"users", label:"Usuários"});
+      }
+
+      items.forEach(it=>{
+        const el = document.createElement("div");
+        el.className = "tab" + (state.view===it.key ? " active" : "");
+        el.textContent = it.label;
+        el.onclick = ()=> {
+          if(it.key==="dash") openDashboard();
+          else if(it.key==="users") openUsers();
+          else {
+            showView("list");
+            setTabs();
+          }
+        };
+        tabs.appendChild(el);
+      });
+    }
+
+    // ===================== TICKETS =====================
+    function buildFilters(){
+      const q = normalizeStr($("q").value).toLowerCase();
+      const status = $("fStatus").value;
+      const setor = normalizeStr($("fSetor").value);
+      const crianca = $("fCrianca").value;
+      const from = $("fFrom").value;
+      const to = $("fTo").value;
+
+      const filters = {
+        status,
+        setor: (state.role==="ADM" ? setor : ""),
+        crianca: crianca==="" ? "" : (crianca==="true"),
+        from, to
+      };
+
+      // q aplica em prontuario/leito no client (e também manda pro server em prontuario/leito)
+      if(q){
+        filters.prontuario = q;
+        filters.leito = q;
+      }
+      return filters;
+    }
+
+    async function refreshTickets({silent=false} = {}){
+      if(!silent) setUpdating(true, "Atualizando tickets...");
+      try{
+        const filters = buildFilters();
+        const data = await gsRun("apiListTickets", filters);
+        setOnline(true);
+        state.tickets = data.tickets || [];
+
+        // recepção: detectar novos
+        if(state.role==="RECEPCAO"){
+          let newly = 0;
+          for(const t of state.tickets){
+            if(t.status_atual === "ABERTO"){
+              if(!state.seen.has(t.ticketId)){
+                state.seen.add(t.ticketId);
+                newly++;
+              }
+            }
+          }
+          if(newly>0){
+            state.newCount += newly;
+            $("newBadge").textContent = String(state.newCount);
+            toast("Nova solicitação", `Chegaram ${newly} novos ticket(s).`);
+            beep();
+          }
+        }
+
+        renderTicketList();
+        if(state.selectedId){
+          // se estiver no detalhe, atualiza detalhe em silêncio
+          await openTicket(state.selectedId, {silent:true});
+        }
+        if(!silent) setUpdating(false, "Pronto");
+      }catch(e){
+        setOnline(false);
+        if(!silent){
+          setUpdating(false, "Falha");
+          toast("Erro", e.message);
+        }
+      }
+    }
+
+    function renderTicketList(){
+      const list = $("ticketList");
+      list.innerHTML = "";
+      const items = state.tickets;
+
+      if(items.length===0){
+        const empty = document.createElement("div");
+        empty.className="muted";
+        empty.textContent="Nenhum ticket encontrado com esses filtros.";
+        list.appendChild(empty);
+        return;
+      }
+
+      items.forEach(t=>{
+        const el = document.createElement("div");
+        el.className = "ticket" + (state.selectedId===t.ticketId ? " active" : "");
+        const status = t.status_atual || "—";
+        const isNew = (state.role==="RECEPCAO" && status==="ABERTO");
+
+        el.innerHTML = `
+          <div class="t1">
+            <div style="min-width:0">
+              <b>${escapeHtml(t.paciente_nome || "—")}</b>
+              <div class="sub">Pront: ${escapeHtml(t.prontuario||"—")} • Leito: ${escapeHtml(t.leito||"—")}</div>
+              <div class="mini">
+                <span class="tag ${isNew ? "new":""}">${escapeHtml(status)}</span>
+                <span class="tag">${escapeHtml(t.setor||"—")}</span>
+                <span class="tag">${t.crianca ? "Criança":"Adulto"}</span>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              ${isNew ? `<span class="badge">NEW</span>` : ``}
+              <div class="muted" style="font-size:11px;margin-top:8px;">${escapeHtml(fmtIso(t.criado_em))}</div>
+            </div>
+          </div>
+        `;
+        el.onclick = ()=> openTicket(t.ticketId);
+        list.appendChild(el);
+      });
+    }
+
+    async function openTicket(ticketId, {silent=false} = {}){
+      if(!silent){
+        setUpdating(true, "Abrindo ticket...");
+        showView("detail");
+        setTabs();
+      }
+      state.selectedId = ticketId;
+
+      try{
+        const data = await gsRun("apiGetTicket", ticketId);
+        setOnline(true);
+        state.selected = data.ticket;
+        state.selectedLogs = data.logs || [];
+
+        renderDetail();
+        setUpdating(false, "Pronto");
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+        showView("list");
+        setTabs();
+      }
+    }
+
+    function renderDetail(){
+      const t = state.selected;
+      if(!t) return;
+
+      $("dTitle").textContent = `#${t.ticketId}`;
+      $("dSub").textContent = `${t.setor || "—"} • Solicitante: ${t.solicitante_nome || t.solicitante_email || "—"}`;
+      $("dStatus").textContent = t.status_atual || "—";
+
+      $("iPaciente").textContent = t.paciente_nome || "—";
+      $("iPront").textContent = t.prontuario || "—";
+      $("iLeito").textContent = t.leito || "—";
+      $("iNasc").textContent = fmtBirth(t.nascimento);
+      $("iCrianca").textContent = t.crianca ? "Sim" : "Não";
+      $("maeBlock").style.display = t.crianca ? "block" : "none";
+      $("iMae").textContent = t.mae_nome || "—";
+
+      // timeline
+      const tl = $("timeline");
+      tl.innerHTML = "";
+      if(state.selectedLogs.length===0){
+        const empty = document.createElement("div");
+        empty.className="muted";
+        empty.textContent="Sem eventos.";
+        tl.appendChild(empty);
+      } else {
+        state.selectedLogs.forEach(l=>{
+          const el = document.createElement("div");
+          el.className="ev";
+          const det = (l.detalhes_json || "");
+          el.innerHTML = `
+            <div class="h">
+              <b>${escapeHtml(l.acao || "—")} • ${escapeHtml(l.de_status || "")} → ${escapeHtml(l.para_status || "")}</b>
+              <span>${escapeHtml(fmtIso(l.timestamp))}</span>
+            </div>
+            <div class="muted" style="font-size:11px;margin-top:6px;">${escapeHtml(l.usuario_email||"")}</div>
+            <pre>${escapeHtml(det)}</pre>
+          `;
+          tl.appendChild(el);
+        });
+      }
+
+      // action buttons por perfil e status (respeita backend, aqui é só UX)
+      const ar = $("actionRow");
+      ar.innerHTML = "";
+      const st = t.status_atual;
+
+      const addBtn = (label, cls, onClick) => {
+        const b = document.createElement("button");
+        b.className = "btn " + (cls||"");
+        b.textContent = label;
+        b.onclick = onClick;
+        ar.appendChild(b);
+      };
+
+      // RECEPCAO pipeline
+      if(state.role==="RECEPCAO"){
+        if(st==="ABERTO") addBtn("Marcar: Recebido", "primary", ()=> doStatus("RECEBIDO_PELA_RECEPCAO"));
+        if(st==="RECEBIDO_PELA_RECEPCAO") addBtn("Marcar: Em produção", "primary", ()=> doStatus("EM_PRODUCAO"));
+        if(st==="RECEBIDO_PELA_RECEPCAO" || st==="EM_PRODUCAO") addBtn("Marcar: Enviado / a caminho", "primary", ()=> doStatus("ENVIADO_A_CAMINHO"));
+        if(st==="ENVIADO_A_CAMINHO") addBtn("Marcar: Entregue / deixado", "primary", ()=> doStatus("ENTREGUE_DEIXADO"));
+      }
+
+      // ASSISTENCIA confirmação
+      if(state.role==="ASSISTENCIA"){
+        if(st==="ENVIADO_A_CAMINHO" || st==="ENTREGUE_DEIXADO"){
+          addBtn("Confirmar: Recebida", "ok", ()=> doStatus("RECEBIDO_PELA_ASSISTENCIA"));
+        }
+      }
+
+      // ADM pode avançar (aqui mostramos botões básicos, sem forçar tudo)
+      if(state.role==="ADM"){
+        const nextMap = {
+          "ABERTO":"RECEBIDO_PELA_RECEPCAO",
+          "RECEBIDO_PELA_RECEPCAO":"EM_PRODUCAO",
+          "EM_PRODUCAO":"ENVIADO_A_CAMINHO",
+          "ENVIADO_A_CAMINHO":"ENTREGUE_DEIXADO",
+          "ENTREGUE_DEIXADO":"RECEBIDO_PELA_ASSISTENCIA",
+        };
+        if(nextMap[st]) addBtn("Avançar etapa", "primary", ()=> doStatus(nextMap[st]));
+      }
+    }
+
+    async function doStatus(toStatus){
+      if(!state.selectedId) return;
+      setUpdating(true, "Salvando status...");
+      try{
+        await gsRun("apiUpdateStatus", state.selectedId, toStatus, {});
+        toast("OK", `Status atualizado: ${toStatus}`);
+        // ao confirmar, backend pode auto-encerrar — então recarrega detalhe
+        await openTicket(state.selectedId, {silent:true});
+        await refreshTickets({silent:true});
+        setUpdating(false, "Pronto");
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+      }
+    }
+
+    // ===================== DASHBOARD =====================
+    async function openDashboard(){
+      showView("dash");
+      setTabs();
+      setUpdating(true, "Carregando dashboard...");
+      try{
+        const filters = buildFilters();
+        const data = await gsRun("apiDashboard", filters);
+        setOnline(true);
+        renderDashboard(data.kpis);
+        setUpdating(false, "Pronto");
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+        showView("list");
+        setTabs();
+      }
+    }
+
+    function renderDashboard(k){
+      if(!k) return;
+
+      $("kTotal").textContent = k.totals.total;
+      $("kOpen").textContent = k.totals.openNow;
+      $("kSla").textContent = `${k.sla.totalPct}%`;
+      $("kAvgClose").textContent = k.avgTimes.toEncerrarMin;
+
+      // Charts
+      destroyCharts();
+
+      // Status
+      const stLabels = Object.keys(k.charts.byStatus);
+      const stVals = stLabels.map(l=>k.charts.byStatus[l]);
+      state.charts.status = new Chart($("chStatus"), {
+        type:"bar",
+        data:{ labels: stLabels, datasets:[{ label:"Tickets", data: stVals }]},
+        options:{ responsive:true, plugins:{ legend:{display:false}}, scales:{ x:{ ticks:{color:"#a7afbd"}}, y:{ ticks:{color:"#a7afbd"}} } }
+      });
+
+      // Hour
+      const hLabels = Array.from({length:24},(_,i)=>String(i).padStart(2,"0"));
+      state.charts.hour = new Chart($("chHour"), {
+        type:"line",
+        data:{ labels: hLabels, datasets:[{ label:"Criações", data: k.charts.hourCount }]},
+        options:{ responsive:true, plugins:{ legend:{display:false}}, scales:{ x:{ ticks:{color:"#a7afbd"}}, y:{ ticks:{color:"#a7afbd"}} } }
+      });
+
+      // Setor
+      const sLabels = k.charts.topSetores.map(x=>x.setor);
+      const sVals = k.charts.topSetores.map(x=>x.total);
+      state.charts.setor = new Chart($("chSetor"), {
+        type:"bar",
+        data:{ labels: sLabels, datasets:[{ label:"Total", data: sVals }]},
+        options:{ responsive:true, plugins:{ legend:{display:false}}, scales:{ x:{ ticks:{color:"#a7afbd"}}, y:{ ticks:{color:"#a7afbd"}} } }
+      });
+
+      // Cancel
+      const cLabels = k.charts.cancelReasons.map(x=>x.motivo);
+      const cVals = k.charts.cancelReasons.map(x=>x.total);
+      state.charts.cancel = new Chart($("chCancel"), {
+        type:"bar",
+        data:{ labels: cLabels, datasets:[{ label:"Total", data: cVals }]},
+        options:{ responsive:true, plugins:{ legend:{display:false}}, scales:{ x:{ ticks:{color:"#a7afbd"}}, y:{ ticks:{color:"#a7afbd"}} } }
+      });
+    }
+
+    function destroyCharts(){
+      for(const k of Object.keys(state.charts)){
+        try{ state.charts[k] && state.charts[k].destroy(); }catch(e){}
+        state.charts[k]=null;
+      }
+    }
+
+    // ===================== USERS (ADM) =====================
+    async function openUsers(){
+      showView("users");
+      setTabs();
+      setUpdating(true, "Carregando usuários...");
+      try{
+        const data = await gsRun("apiListUsers");
+        renderUsers(data.users || []);
+        setUpdating(false, "Pronto");
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+        showView("list");
+        setTabs();
+      }
+    }
+
+    function renderUsers(users){
+      const list = $("usersList");
+      list.innerHTML = "";
+      users.forEach(u=>{
+        const el = document.createElement("div");
+        el.className = "ticket";
+        el.innerHTML = `
+          <div class="t1">
+            <div style="min-width:0">
+              <b>${escapeHtml(u.email)}</b>
+              <div class="sub">${escapeHtml(u.nome||"")} • ${escapeHtml(u.perfil)} • ${escapeHtml(u.setor)} • ativo: ${u.ativo}</div>
+              <div class="mini">
+                <span class="tag">${escapeHtml(u.updated_at||"")}</span>
+                <span class="tag">${escapeHtml(u.updated_by||"")}</span>
+              </div>
+            </div>
+            <div><button class="btn ghost">Editar</button></div>
+          </div>
+        `;
+        el.querySelector("button").onclick = ()=>{
+          $("uEmail").value = u.email;
+          $("uNome").value = u.nome || "";
+          $("uPerfil").value = u.perfil;
+          $("uSetor").value = u.setor || "";
+          $("uAtivo").value = String(!!u.ativo);
+          toast("Usuários", "Campos carregados para edição.");
+        };
+        list.appendChild(el);
+      });
+    }
+
+    async function saveUser(){
+      setUpdating(true, "Salvando usuário...");
+      try{
+        const obj = {
+          email: normalizeStr($("uEmail").value).toLowerCase(),
+          nome: normalizeStr($("uNome").value),
+          perfil: $("uPerfil").value,
+          setor: normalizeStr($("uSetor").value),
+          ativo: $("uAtivo").value === "true"
+        };
+        await gsRun("apiUpsertUser", obj);
+        toast("OK", "Usuário salvo.");
+        await openUsers();
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+      }
+    }
+
+    // ===================== EXPORT CSV =====================
+    async function exportCsv(){
+      setUpdating(true, "Gerando CSV...");
+      try{
+        const filters = buildFilters();
+        const data = await gsRun("apiExportCsv", filters);
+        const blob = new Blob([data.csv], {type:"text/csv;charset=utf-8;"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = data.filename || "tickets.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setUpdating(false, "Pronto");
+        toast("Exportação", "CSV gerado.");
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+      }
+    }
+
+    // ===================== INIT =====================
+    async function init(){
+      setUpdating(true, "Carregando sessão...");
+      try{
+        const data = await gsRun("apiGetMe");
+        state.me = data.me;
+        state.role = data.profile;
+        state.setor = data.setor;
+
+        $("roleTag").textContent = state.role;
+        $("meLine").textContent = `${state.me.email} • ${state.role} • setor: ${state.setor}`;
+        $("leftTitle").textContent = state.role==="ADM" ? "Gestão" : "Tickets";
+        $("rightTitle").textContent = "Lista";
+
+        $("createBox").style.display = (state.role==="ASSISTENCIA" || state.role==="ADM") ? "block" : "none";
+        $("admBox").style.display = (state.role==="ADM") ? "block" : "none";
+        $("admFilters").style.display = (state.role==="ADM") ? "block" : "none";
+        $("recepBox").style.display = (state.role==="RECEPCAO") ? "block" : "none";
+
+        // kiosk/poll para recepção
+        if(state.role==="RECEPCAO"){
+          // tenta ler poll no backend via config? aqui usamos default e mostramos.
+          $("pollMs").textContent = String(state.pollMs);
+          startKiosk();
+        } else {
+          stopKiosk();
+        }
+
+        setTabs();
+        showView("list");
+
+        setUpdating(false, "Pronto");
+        await refreshTickets();
+
+      }catch(e){
+        setUpdating(false, "Falha");
+        setOnline(false);
+        toast("Acesso negado", e.message);
+        $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e ativo.";
+      }
+    }
+
+    function startKiosk(){
+      stopKiosk();
+      $("kioskState").textContent = "ON";
+      state.kioskTimer = setInterval(()=> refreshTickets({silent:true}), state.pollMs);
+    }
+    function stopKiosk(){
+      if(state.kioskTimer) clearInterval(state.kioskTimer);
+      state.kioskTimer = null;
+      $("kioskState").textContent = "OFF";
+    }
+
+    // ===================== EVENTS =====================
+    $("btnRefresh").onclick = ()=> refreshTickets();
+    $("btnApplyFilters").onclick = ()=> refreshTickets();
+    $("btnClearFilters").onclick = ()=>{
+      $("q").value = "";
+      $("fStatus").value = "";
+      $("fSetor").value = "";
+      $("fCrianca").value = "";
+      $("fFrom").value = "";
+      $("fTo").value = "";
+      refreshTickets();
+    };
+
+    $("btnBack").onclick = ()=>{
+      state.selectedId = null;
+      state.selected = null;
+      state.selectedLogs = [];
+      showView("list");
+      setTabs();
+    };
+
+    $("cNasc").addEventListener("input", maskBirthInput);
+    $("cCrianca").addEventListener("change", ()=>{
+      $("maeField").style.display = $("cCrianca").checked ? "block" : "none";
+    });
+
+    $("btnCreate").onclick = async ()=>{
+      const paciente_nome = normalizeStr($("cNome").value);
+      const prontuario = normalizeStr($("cPront").value);
+      const leito = normalizeStr($("cLeito").value);
+      const nascimento = normalizeStr($("cNasc").value);
+      const crianca = $("cCrianca").checked;
+      const mae_nome = normalizeStr($("cMae").value);
+
+      if(!paciente_nome || !prontuario || !leito || !nascimento){
+        toast("Validação", "Preencha todos os campos obrigatórios.");
+        return;
+      }
+      if(!validateBirthDDMMYYYY(nascimento)){
+        toast("Validação", "Data de nascimento inválida (use DD/MM/AAAA).");
+        return;
+      }
+      if(crianca && !mae_nome){
+        toast("Validação", "Para criança, nome da mãe é obrigatório.");
+        return;
+      }
+
+      setUpdating(true, "Criando ticket...");
+      try{
+        const payload = { paciente_nome, prontuario, leito, nascimento, crianca, mae_nome };
+        const data = await gsRun("apiCreateTicket", payload);
+        toast("OK", `Ticket criado: ${data.ticketId}`);
+        $("cNome").value=""; $("cPront").value=""; $("cLeito").value=""; $("cNasc").value="";
+        $("cCrianca").checked=false; $("cMae").value=""; $("maeField").style.display="none";
+        setUpdating(false, "Pronto");
+        await refreshTickets();
+        await openTicket(data.ticketId);
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+      }
+    };
+
+    $("btnCancel").onclick = async ()=>{
+      if(!state.selectedId) return;
+      const motivo = normalizeStr($("cancelReason").value);
+      if(!motivo){
+        toast("Cancelamento", "Motivo é obrigatório.");
+        return;
+      }
+      setUpdating(true, "Cancelando...");
+      try{
+        await gsRun("apiCancelTicket", state.selectedId, motivo);
+        toast("OK", "Ticket cancelado.");
+        $("cancelReason").value="";
+        setUpdating(false, "Pronto");
+        await refreshTickets({silent:true});
+        await openTicket(state.selectedId, {silent:true});
+      }catch(e){
+        setUpdating(false, "Falha");
+        toast("Erro", e.message);
+      }
+    };
+
+    $("btnOpenUsers").onclick = openUsers;
+    $("btnOpenDashboard").onclick = openDashboard;
+
+    $("btnCloseDash").onclick = ()=>{
+      destroyCharts();
+      showView("list");
+      setTabs();
+    };
+    $("btnCloseUsers").onclick = ()=>{
+      showView("list");
+      setTabs();
+    };
+
+    $("btnSaveUser").onclick = saveUser;
+
+    $("btnExportCsv").onclick = exportCsv;
+
+    $("btnAudio").onclick = ()=>{
+      ensureAudioUnlocked();
+    };
+    $("btnTestSound").onclick = ()=>{
+      if(!state.audio.unlocked) ensureAudioUnlocked();
+      beep();
+    };
+    $("btnMute").onclick = ()=>{
+      state.audio.muted = !state.audio.muted;
+      $("btnMute").textContent = state.audio.muted ? "Ativar som" : "Silenciar";
+      toast("Som", state.audio.muted ? "Silenciado." : "Som ativado.");
+    };
+
+    // init
+    init();
+  </script>
+</body>
+</html>
