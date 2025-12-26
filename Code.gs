@@ -111,6 +111,7 @@ function onOpen() {
       .createMenu(APP.NAME)
       .addItem("✅ Setup (criar abas / headers / config)", "setup")
       .addItem("➕ Seed Admin (me tornar ADM)", "seedMeAsAdmin")
+      .addItem("🚀 Setup completo (setup + me cadastrar como ADM)", "setupFull")
       .addSeparator()
       .addItem("🧪 Mock: gerar tickets", "mockGenerateTickets")
       .addToUi();
@@ -139,6 +140,16 @@ function setup() {
     if (sh) sh.setFrozenRows(1);
   });
 
+  return true;
+}
+
+/**
+ * Atalho para rodar tudo de uma vez pelo menu.
+ * Cria abas, configura defaults e já cadastra o usuário atual como ADM GLOBAL.
+ */
+function setupFull() {
+  setup();
+  seedMeAsAdmin();
   return true;
 }
 
