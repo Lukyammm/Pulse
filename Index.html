@@ -328,7 +328,10 @@
 <body>
   <div class="topLoginBar">
     <div class="topLoginBrand"><div class="dot"></div><div>Pulse</div></div>
-    <button class="topLoginBtn" id="btnTopLogin">Entrar</button>
+    <div class="row" style="gap:8px; align-items:center;">
+      <button class="topLoginBtn" id="btnAssistTop">Acesso Assistência</button>
+      <button class="topLoginBtn" style="background:linear-gradient(135deg,#0b254a,#0a84ff);" id="btnTopLogin">Área do Administrador</button>
+    </div>
   </div>
   <div id="gate" class="gate">
     <div class="gateCard">
@@ -340,11 +343,19 @@
         </div>
       </div>
       <div id="gateAction" class="gateAction">
-        <div class="gateLabel">Acessar sistema</div>
-        <div class="gateHint">Informe seu e-mail e senha cadastrados no USERS.</div>
-        <div class="field"><label>E-mail</label><input id="loginEmail" placeholder="email@dominio.com" /></div>
-        <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••" /></div>
-        <div class="row stackMobile"><button class="btn primary" id="btnAccess">Entrar</button></div>
+        <div class="gateLabel">Acesso Assistência</div>
+        <div class="gateHint" id="assistHint">Acesso geral para assistência, sem e-mail ou senha.</div>
+        <div class="row stackMobile">
+          <button class="btn primary" id="btnAssist">Entrar na Assistência</button>
+          <button class="btn" id="btnAdminArea">Área do Administrador</button>
+        </div>
+        <div class="loginCard" id="adminLogin" style="display:none">
+          <b>Área do Administrador</b>
+          <span>Informe e-mail e senha cadastrados no USERS.</span>
+          <div class="field"><label>E-mail</label><input id="loginEmail" placeholder="email@dominio.com" /></div>
+          <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••" /></div>
+          <div class="row stackMobile"><button class="btn primary" id="btnAccess">Entrar</button></div>
+        </div>
       </div>
       <div id="gateState" class="gateState">
         <div class="gatePulse"></div>
@@ -707,14 +718,16 @@
         gateAction.style.display = "flex";
         gateState.style.display = "none";
         gateError.style.display = "none";
+        $("btnAssist").disabled = false;
         $("btnAccess").disabled = false;
-        gateAction.querySelector(".gateHint").textContent = message || "Preencha e-mail e senha para entrar.";
+        $("assistHint").textContent = message || "Entre na assistência sem login ou abra a Área do Administrador.";
       } else if(mode === "loading"){
         gate.style.display = "flex";
         $("appWrap").style.display = "none";
         gateAction.style.display = "none";
         gateState.style.display = "flex";
         gateError.style.display = "none";
+        $("btnAssist").disabled = true;
         $("btnAccess").disabled = true;
         gate.querySelector(".gateLabel").textContent = message || "Validando sessão...";
       } else if(mode === "ready") {
@@ -1292,12 +1305,12 @@
     }
 
     // ===================== INIT =====================
-    async function init(){
+    async function loginAdmin(){
       const email = normalizeStr($("loginEmail").value).toLowerCase();
       const senha = String($("loginPass").value || "");
       if(!email || !senha){
         toast("Login", "Preencha e-mail e senha.");
-        setGateState("idle", "Preencha e-mail e senha para entrar.");
+        setGateState("idle", "Para administração, informe e-mail e senha.");
         return;
       }
 
@@ -1321,6 +1334,30 @@
         setGateState("error", e.message);
         toast("Acesso negado", e.message);
         $("meLine").textContent = "Sem acesso. Você precisa estar cadastrado em USERS e ativo.";
+      }
+    }
+
+    async function enterAssistencia(){
+      setGateState("loading", "Entrando como assistência...");
+      resetSessionUi();
+      try{
+        const data = await gsRun("apiGuestAccess");
+        state.authToken = data.token;
+        state.me = data.me;
+        state.role = data.profile;
+        state.setor = data.setor;
+
+        setGateState("ready", "Acesso liberado");
+        revealAppShell();
+
+        await bootstrapSession();
+      }catch(e){
+        setUpdating(false, "Falha");
+        setOnline(false);
+        state.authToken = null;
+        setGateState("error", e.message);
+        toast("Acesso negado", e.message);
+        $("meLine").textContent = "Sem acesso. Contate o administrador.";
       }
     }
 
@@ -1389,9 +1426,17 @@
     }
 
     // ===================== EVENTS =====================
-    $("btnRetry").onclick = ()=> setGateState("idle", "Tente novamente informando e-mail e senha.");
-    $("btnAccess").onclick = ()=> init();
-    $("btnTopLogin").onclick = ()=> init();
+    function showAdminLogin(){
+      $("adminLogin").style.display = "flex";
+      $("assistHint").textContent = "Área do Administrador: informe e-mail e senha.";
+    }
+
+    $("btnRetry").onclick = ()=> setGateState("idle", "Tente novamente. Para administração, informe e-mail e senha.");
+    $("btnAccess").onclick = ()=> loginAdmin();
+    $("btnTopLogin").onclick = ()=> { showAdminLogin(); loginAdmin(); };
+    $("btnAdminArea").onclick = ()=> { showAdminLogin(); };
+    $("btnAssist").onclick = ()=> enterAssistencia();
+    $("btnAssistTop").onclick = ()=> enterAssistencia();
 
     $("btnRefresh").onclick = ()=> refreshTickets();
     $("btnApplyFilters").onclick = ()=> refreshTickets();
@@ -1507,7 +1552,7 @@
     };
 
     // init
-    setGateState("idle", "Informe seu e-mail e senha para entrar.");
+    setGateState("idle", "Entre na assistência ou abra a Área do Administrador.");
   </script>
 </body>
 </html>

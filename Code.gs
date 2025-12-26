@@ -9,6 +9,12 @@ const APP = {
   NAME: "Pulseiras",
   VERSION: "1.0.0",
   TZ: Session.getScriptTimeZone() || "America/Fortaleza",
+  GUEST: {
+    EMAIL: "assistencia@acesso",
+    NOME: "Assistência Geral",
+    PERFIL: "ASSISTENCIA",
+    SETOR: "GERAL",
+  },
   SHEETS: {
     CONFIG: "CONFIG",
     USERS: "USERS",
@@ -172,8 +178,33 @@ function apiLogin(email, senha) {
     if (user.senha !== senha) throw new Error("Senha inválida.");
     if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(user.perfil)) throw new Error("Perfil inválido no USERS.");
 
-    const token = createSession_(user.email);
+    const token = createSession_(user.email, {
+      perfil: user.perfil,
+      setor: user.setor,
+      nome: user.nome,
+      isGuest: false,
+    });
     const me = sanitizeUser_(user);
+    return { token, me, profile: me.perfil, setor: me.setor, now: new Date().toISOString() };
+  });
+}
+
+function apiGuestAccess() {
+  return wrap_(function () {
+    const guest = {
+      email: APP.GUEST.EMAIL,
+      nome: APP.GUEST.NOME,
+      perfil: APP.GUEST.PERFIL,
+      setor: APP.GUEST.SETOR,
+      ativo: true,
+    };
+    const token = createSession_(guest.email, {
+      perfil: guest.perfil,
+      setor: guest.setor,
+      nome: guest.nome,
+      isGuest: true,
+    });
+    const me = sanitizeUser_(guest);
     return { token, me, profile: me.perfil, setor: me.setor, now: new Date().toISOString() };
   });
 }
@@ -712,14 +743,29 @@ function sheetRepo_(ss) {
 /** ========================= AUTH / PERMS ========================= **/
 
 function authContext_(token) {
-  const email = resolveSessionEmail_(token);
-  const repo = sheetRepo_(getDb_());
-  const me = repo.users.getByEmail(email);
-  if (!me) throw new Error("Sessão inválida: usuário não cadastrado na aba USERS.");
-  if (!me.ativo) throw new Error("Sessão inválida: usuário inativo.");
-  if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(me.perfil)) throw new Error("Perfil inválido no USERS.");
-  refreshSession_(token, email);
-  return { email, me: sanitizeUser_(me) };
+  const session = resolveSession_(token);
+  let me = null;
+
+  if (session.isGuest) {
+    me = {
+      email: session.email || APP.GUEST.EMAIL,
+      nome: session.nome || APP.GUEST.NOME,
+      perfil: APP.GUEST.PERFIL,
+      setor: session.setor || APP.GUEST.SETOR,
+      ativo: true,
+    };
+  } else {
+    const repo = sheetRepo_(getDb_());
+    const user = repo.users.getByEmail(session.email);
+    if (!user) throw new Error("Sessão inválida: usuário não cadastrado na aba USERS.");
+    if (!user.ativo) throw new Error("Sessão inválida: usuário inativo.");
+    if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(user.perfil)) throw new Error("Perfil inválido no USERS.");
+    me = user;
+  }
+
+  const sanitized = sanitizeUser_(me);
+  refreshSession_(token, Object.assign({}, session, sanitized));
+  return { email: sanitized.email, me: sanitized };
 }
 
 function sanitizeUser_(u) {
@@ -733,25 +779,44 @@ function sanitizeUser_(u) {
   };
 }
 
-function createSession_(email) {
+function createSession_(email, extra) {
   const token = Utilities.getUuid();
   const cache = CacheService.getScriptCache();
-  cache.put(`sess:${token}`, email, 21600); // 6h
+  const payload = Object.assign(
+    {
+      email: String(email || "").trim().toLowerCase(),
+      perfil: "",
+      setor: "",
+      nome: "",
+      isGuest: false,
+    },
+    extra || {}
+  );
+  cache.put(`sess:${token}`, JSON.stringify(payload), 21600); // 6h
   return token;
 }
 
-function resolveSessionEmail_(token) {
+function resolveSession_(token) {
   token = String(token || "").trim();
   if (!token) throw new Error("Sessão inválida. Faça login.");
   const cache = CacheService.getScriptCache();
-  const email = cache.get(`sess:${token}`);
-  if (!email) throw new Error("Sessão expirada ou inválida. Faça login novamente.");
-  return email;
+  const raw = cache.get(`sess:${token}`);
+  if (!raw) throw new Error("Sessão expirada ou inválida. Faça login novamente.");
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "string") {
+      return { email: parsed, perfil: "", setor: "", nome: "", isGuest: false };
+    }
+    parsed.email = String(parsed.email || "").trim().toLowerCase();
+    return parsed;
+  } catch (e) {
+    return { email: String(raw || "").trim().toLowerCase(), perfil: "", setor: "", nome: "", isGuest: false };
+  }
 }
 
-function refreshSession_(token, email) {
+function refreshSession_(token, payload) {
   const cache = CacheService.getScriptCache();
-  if (token && email) cache.put(`sess:${token}`, email, 21600);
+  if (token && payload) cache.put(`sess:${token}`, JSON.stringify(payload), 21600);
 }
 
 function getUserEmail_() {
