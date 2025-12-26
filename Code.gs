@@ -19,7 +19,7 @@ const APP = {
   // Cabeçalhos (linha 1)
   HEADERS: {
     CONFIG: ["key", "value", "updated_at", "updated_by"],
-    USERS: ["email", "nome", "perfil", "setor", "ativo", "updated_at", "updated_by"],
+    USERS: ["email", "senha", "nome", "perfil", "setor", "ativo", "updated_at", "updated_by"],
     TICKETS: [
       "ticketId",
       "status_atual",
@@ -159,16 +159,35 @@ function seedMeAsAdmin() {
 
 /** ========================= API PUBLICA (google.script.run) ========================= **/
 
-function apiGetMe() {
+function apiLogin(email, senha) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const repo = sheetRepo_(getDb_());
+    email = String(email || "").trim().toLowerCase();
+    senha = String(senha || "");
+    if (!email || !senha) throw new Error("Informe e-mail e senha.");
+
+    const user = repo.users.getByEmail(email);
+    if (!user) throw new Error("Usuário não encontrado.");
+    if (!user.ativo) throw new Error("Usuário inativo.");
+    if (user.senha !== senha) throw new Error("Senha inválida.");
+    if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(user.perfil)) throw new Error("Perfil inválido no USERS.");
+
+    const token = createSession_(user.email);
+    const me = sanitizeUser_(user);
+    return { token, me, profile: me.perfil, setor: me.setor, now: new Date().toISOString() };
+  });
+}
+
+function apiGetMe(token) {
+  return wrap_(function () {
+    const ctx = authContext_(token);
     return { me: ctx.me, profile: ctx.me.perfil, setor: ctx.me.setor, now: new Date().toISOString() };
   });
 }
 
-function apiListTickets(filters) {
+function apiListTickets(token, filters) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     filters = filters || {};
     const repo = sheetRepo_(getDb_());
     const rows = repo.tickets.list(filters, ctx);
@@ -176,9 +195,9 @@ function apiListTickets(filters) {
   });
 }
 
-function apiGetTicket(ticketId) {
+function apiGetTicket(token, ticketId) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     const repo = sheetRepo_(getDb_());
     const ticket = repo.tickets.get(ticketId);
     if (!ticket) throw new Error("Ticket não encontrado.");
@@ -188,9 +207,9 @@ function apiGetTicket(ticketId) {
   });
 }
 
-function apiCreateTicket(payload) {
+function apiCreateTicket(token, payload) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     requireRole_(ctx, ["ASSISTENCIA", "ADM"]);
     payload = normalizeTicketPayload_(payload || {});
     validateTicketPayload_(payload);
@@ -220,9 +239,9 @@ function apiCreateTicket(payload) {
   });
 }
 
-function apiUpdateStatus(ticketId, toStatus, extra) {
+function apiUpdateStatus(token, ticketId, toStatus, extra) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     extra = extra || {};
     const repo = sheetRepo_(getDb_());
     const ticket = repo.tickets.get(ticketId);
@@ -288,9 +307,9 @@ function apiUpdateStatus(ticketId, toStatus, extra) {
   });
 }
 
-function apiCancelTicket(ticketId, motivo) {
+function apiCancelTicket(token, ticketId, motivo) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     const repo = sheetRepo_(getDb_());
     const ticket = repo.tickets.get(ticketId);
     if (!ticket) throw new Error("Ticket não encontrado.");
@@ -313,15 +332,15 @@ function apiCancelTicket(ticketId, motivo) {
     const lock = LockService.getScriptLock();
     lock.waitLock(15000);
     try {
-      const t2 = repo.tickets.get(ticketId);
+      const t2 = repo.tickets.get(ticket.ticketId);
       if (!t2) throw new Error("Ticket não encontrado.");
       if ([APP.STATUS.ENCERRADO, APP.STATUS.CANCELADO].includes(t2.status_atual)) {
         throw new Error("Ticket já finalizado. Não dá pra cancelar.");
       }
 
-      repo.tickets.cancel(ticketId, motivo, ctx.me.email);
+      repo.tickets.cancel(ticket.ticketId, motivo, ctx.me.email);
       repo.logs.append({
-        ticketId,
+        ticketId: ticket.ticketId,
         acao: "CANCEL",
         de_status: t2.status_atual,
         para_status: APP.STATUS.CANCELADO,
@@ -335,18 +354,18 @@ function apiCancelTicket(ticketId, motivo) {
   });
 }
 
-function apiListUsers() {
+function apiListUsers(token) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     requireRole_(ctx, ["ADM"]);
     const repo = sheetRepo_(getDb_());
     return { users: repo.users.list() };
   });
 }
 
-function apiUpsertUser(userObj) {
+function apiUpsertUser(token, userObj) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     requireRole_(ctx, ["ADM"]);
     userObj = userObj || {};
     const email = String(userObj.email || "").trim().toLowerCase();
@@ -357,25 +376,26 @@ function apiUpsertUser(userObj) {
     if (!setor) throw new Error("setor é obrigatório");
     const ativo = !!userObj.ativo;
     const nome = String(userObj.nome || "").trim();
+    const senha = String(userObj.senha || "");
 
     const repo = sheetRepo_(getDb_());
-    repo.users.upsert({ email, nome, perfil, setor, ativo }, ctx.me.email);
+    repo.users.upsert({ email, nome, perfil, setor, ativo, senha }, ctx.me.email);
     return { ok: true };
   });
 }
 
-function apiConfigGet() {
+function apiConfigGet(token) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     requireRole_(ctx, ["ADM"]);
     const repo = sheetRepo_(getDb_());
     return { config: repo.config.listAll() };
   });
 }
 
-function apiConfigSet(key, value) {
+function apiConfigSet(token, key, value) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     requireRole_(ctx, ["ADM"]);
     key = String(key || "").trim();
     value = String(value || "").trim();
@@ -386,9 +406,9 @@ function apiConfigSet(key, value) {
   });
 }
 
-function apiDashboard(filters) {
+function apiDashboard(token, filters) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     // ADM vê tudo. Recepção vê tudo da fila. Assistência vê do próprio setor.
     filters = filters || {};
     const repo = sheetRepo_(getDb_());
@@ -401,9 +421,9 @@ function apiDashboard(filters) {
   });
 }
 
-function apiExportCsv(filters) {
+function apiExportCsv(token, filters) {
   return wrap_(function () {
-    const ctx = authContext_();
+    const ctx = authContext_(token);
     filters = filters || {};
     const repo = sheetRepo_(getDb_());
     const tickets = repo.tickets.list(filters, ctx);
@@ -465,12 +485,14 @@ function sheetRepo_(ss) {
       u.ativo = truthy_(u.ativo);
       u.perfil = String(u.perfil || "").trim().toUpperCase();
       u.setor = String(u.setor || "").trim();
+      u.senha = String(u.senha || "");
       return u;
     },
     list() {
       const rows = readSheetAsObjects_(usersSh);
       return rows.map((u) => ({
         email: String(u.email || "").trim().toLowerCase(),
+        senha: String(u.senha || ""),
         nome: String(u.nome || ""),
         perfil: String(u.perfil || "").trim().toUpperCase(),
         setor: String(u.setor || ""),
@@ -485,6 +507,7 @@ function sheetRepo_(ss) {
       const now = new Date().toISOString();
       const obj = {
         email,
+        senha: String(u.senha || ""),
         nome: String(u.nome || ""),
         perfil: String(u.perfil || "").trim().toUpperCase(),
         setor: String(u.setor || ""),
@@ -688,15 +711,47 @@ function sheetRepo_(ss) {
 
 /** ========================= AUTH / PERMS ========================= **/
 
-function authContext_() {
-  const email = getUserEmail_();
-  if (!email) throw new Error("E-mail não identificado. Necessário Google Workspace + WebApp executando como 'usuário acessando'.");
+function authContext_(token) {
+  const email = resolveSessionEmail_(token);
   const repo = sheetRepo_(getDb_());
   const me = repo.users.getByEmail(email);
-  if (!me) throw new Error("Sem acesso: usuário não cadastrado na aba USERS.");
-  if (!me.ativo) throw new Error("Sem acesso: usuário inativo.");
+  if (!me) throw new Error("Sessão inválida: usuário não cadastrado na aba USERS.");
+  if (!me.ativo) throw new Error("Sessão inválida: usuário inativo.");
   if (!["ASSISTENCIA", "RECEPCAO", "ADM"].includes(me.perfil)) throw new Error("Perfil inválido no USERS.");
-  return { email, me };
+  refreshSession_(token, email);
+  return { email, me: sanitizeUser_(me) };
+}
+
+function sanitizeUser_(u) {
+  if (!u) return null;
+  return {
+    email: u.email,
+    nome: u.nome,
+    perfil: u.perfil,
+    setor: u.setor,
+    ativo: !!u.ativo,
+  };
+}
+
+function createSession_(email) {
+  const token = Utilities.getUuid();
+  const cache = CacheService.getScriptCache();
+  cache.put(`sess:${token}`, email, 21600); // 6h
+  return token;
+}
+
+function resolveSessionEmail_(token) {
+  token = String(token || "").trim();
+  if (!token) throw new Error("Sessão inválida. Faça login.");
+  const cache = CacheService.getScriptCache();
+  const email = cache.get(`sess:${token}`);
+  if (!email) throw new Error("Sessão expirada ou inválida. Faça login novamente.");
+  return email;
+}
+
+function refreshSession_(token, email) {
+  const cache = CacheService.getScriptCache();
+  if (token && email) cache.put(`sess:${token}`, email, 21600);
 }
 
 function getUserEmail_() {
