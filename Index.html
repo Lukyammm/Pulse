@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <title><?= APP_NAME ?> • WebApp</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,6 +31,7 @@
       --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     *{box-sizing:border-box;}
+    html{-webkit-text-size-adjust:100%; width:100%;}
     body{
       margin:0;
       min-height:100vh;
@@ -43,6 +44,7 @@
       font-size:16px;
       line-height:1.6;
       padding:0 16px 24px;
+      max-width:100%;
     }
     .topLoginBar{
       position:sticky;
@@ -343,7 +345,7 @@
       .drawer{width:min(520px, 40vw);}
     }
     @media (max-width: 767px){
-      body{font-size:15px; padding-bottom:94px;}
+      body{font-size:16px; padding-bottom:94px;}
       .wrap{padding:0 14px 90px;}
       .grid{gap:10px;}
       .card{border-radius:16px;}
@@ -353,6 +355,10 @@
       .detailGrid{gap:10px;}
       #mobileDrawerSpacer{height:72px;}
       .topbar .row{width:100%; justify-content:flex-start;}
+      .btn{font-size:16px; padding:13px 16px;}
+      input, select, textarea{font-size:16px;}
+      .gateIntro h1{font-size:26px;}
+      .gateTitle{font-size:24px;}
     }
     @media (max-width: 540px){
       .gateCard{padding:22px;}
