@@ -151,7 +151,7 @@
     .listHeaderActions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
     .drawerWrap{position:fixed; inset:0; pointer-events:none; z-index:30;}
     .drawerOverlay{position:absolute; inset:0; background:rgba(15,23,42,.35); opacity:0; transition:.2s opacity;}
-    .drawer{position:absolute; top:0; right:-520px; width:min(520px, 40vw); max-width:520px; height:100%; background:#ffffff; border-left:1px solid var(--line); box-shadow:-12px 0 32px rgba(15,23,42,.18); border-radius:20px 0 0 20px; padding:20px 20px 26px; display:flex; flex-direction:column; gap:16px; transition:.25s transform, .25s right; transform:translateX(0);}
+    .drawer{position:absolute; top:0; right:-100%; width:min(520px, 40vw); max-width:520px; height:100%; background:#ffffff; border-left:1px solid var(--line); box-shadow:-12px 0 32px rgba(15,23,42,.18); border-radius:20px 0 0 20px; padding:20px 20px 26px; display:flex; flex-direction:column; gap:16px; transition:.25s transform, .25s right; transform:translateX(0);}
     .drawer.open{right:0; pointer-events:auto;}
     .drawerWrap.open{pointer-events:auto;}
     .drawerWrap.open .drawerOverlay{opacity:1;}
