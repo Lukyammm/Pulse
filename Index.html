@@ -932,9 +932,16 @@
     }
 
     // ===================== API WRAPPER =====================
+    const AUTH_FREE_API = new Set(["apiLogin", "apiLoginSession", "apiGuestAccess"]);
     function gsRun(fn, ...args){
       return new Promise((resolve, reject)=>{
-        const finalArgs = fn === "apiLogin" ? args : [state.authToken, ...args];
+        const needsAuth = !AUTH_FREE_API.has(fn);
+        if(needsAuth && !state.authToken){
+          reject(new Error("Sessão inválida. Faça login."));
+          return;
+        }
+
+        const finalArgs = needsAuth ? [state.authToken, ...args] : args;
         google.script.run
           .withSuccessHandler((res)=>{
             if(!res || res.ok !== true){
