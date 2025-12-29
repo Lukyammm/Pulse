@@ -96,6 +96,8 @@ const APP = {
 };
 
 function doGet() {
+  ensureSetup_();
+
   const t = HtmlService.createTemplateFromFile("Index");
   t.APP_NAME = APP.NAME;
   t.APP_VERSION = APP.VERSION;
@@ -126,18 +128,43 @@ function onOpen() {
 }
 
 function setup() {
-  const ss = getDb_();
-  ensureSheetWithHeaders_(ss, APP.SHEETS.CONFIG, APP.HEADERS.CONFIG);
-  ensureSheetWithHeaders_(ss, APP.SHEETS.USERS, APP.HEADERS.USERS);
-  ensureSheetWithHeaders_(ss, APP.SHEETS.TICKETS, APP.HEADERS.TICKETS);
-  ensureSheetWithHeaders_(ss, APP.SHEETS.LOGS, APP.HEADERS.LOGS);
-  ensureSheetWithHeaders_(ss, APP.SHEETS.DASH_CACHE, APP.HEADERS.DASH_CACHE);
+  return ensureSetup_();
+}
 
-  // Config defaults
-  const cfg = sheetRepo_(ss).config;
-  Object.keys(APP.DEFAULT_CONFIG).forEach((k) => {
-    if (!cfg.get(k)) cfg.set(k, APP.DEFAULT_CONFIG[k], "system@setup");
+function ensureSetup_() {
+  const ss = getDb_();
+
+  const createdSheets = [];
+  Object.keys(APP.SHEETS).forEach((key) => {
+    const created = ensureSheetWithHeaders_(ss, APP.SHEETS[key], APP.HEADERS[key]);
+    if (created) createdSheets.push(APP.SHEETS[key]);
   });
+
+  const cfgRepo = sheetRepo_(ss).config;
+  let defaultsApplied = false;
+  Object.keys(APP.DEFAULT_CONFIG).forEach((k) => {
+    if (!cfgRepo.get(k)) {
+      cfgRepo.set(k, APP.DEFAULT_CONFIG[k], "system@setup");
+      defaultsApplied = true;
+    }
+  });
+
+  const usersRepo = sheetRepo_(ss).users;
+  let adminSeeded = false;
+  if (!usersRepo.getByEmail("admin@local")) {
+    usersRepo.upsert(
+      {
+        email: "admin@local",
+        senha: "admin123",
+        nome: "Administrador", // altere depois do primeiro acesso
+        perfil: "ADM",
+        setor: "GLOBAL",
+        ativo: true,
+      },
+      "system@setup"
+    );
+    adminSeeded = true;
+  }
 
   // Congelar headers
   Object.values(APP.SHEETS).forEach((name) => {
@@ -145,7 +172,9 @@ function setup() {
     if (sh) sh.setFrozenRows(1);
   });
 
-  return true;
+  PropertiesService.getScriptProperties().setProperty("SETUP_LAST_RUN", new Date().toISOString());
+
+  return { createdSheets, defaultsApplied, adminSeeded };
 }
 
 function seedMeAsAdmin() {
@@ -1232,7 +1261,11 @@ function getDb_() {
 
 function ensureSheetWithHeaders_(ss, name, headers) {
   let sh = ss.getSheetByName(name);
-  if (!sh) sh = ss.insertSheet(name);
+  let created = false;
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    created = true;
+  }
   const range = sh.getRange(1, 1, 1, headers.length);
   const values = range.getValues()[0];
   const isEmpty = values.every((v) => !String(v || "").trim());
@@ -1250,6 +1283,8 @@ function ensureSheetWithHeaders_(ss, name, headers) {
       sh.getRange(1, i + 1).setValue(need[i]);
     }
   }
+
+  return created || isEmpty;
 }
 
 function readSheetAsObjects_(sh) {

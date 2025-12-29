@@ -6,9 +6,9 @@
 3. Publique em `Implantar > Implantação nova` como **Aplicativo da Web**:
    - Executar como: **Usuário que acessa**.
    - Quem pode acessar: **Sua organização**.
-4. Abra a URL do WebApp e confirme que a tela inicial exibe apenas o cartão "Acessar sistema"; clique no botão **Acessar** para validar a sessão e só então liberar a aplicação.
-5. Rode o menu `Pulse WebApp > Setup` (se container-bound) ou execute a função `ensureSetup_()` para criar abas e cabeçalhos automaticamente.
-6. A conta `admin@local` é criada apenas na primeira execução com senha `admin123`; altere imediatamente pelo backend (atualize hash na aba `USUARIOS`).
+4. Abra a URL do WebApp; o `ensureSetup_()` roda automaticamente e cria abas/cabeçalhos, congela os títulos e grava configurações padrão.
+5. Se quiser forçar o processo manualmente, rode o menu `Pulse WebApp > Setup` (se container-bound) ou execute `ensureSetup_()` pelo editor.
+6. A conta `admin@local` é criada na primeira execução com senha `admin123`; altere imediatamente na aba `USERS`.
 
 ## 2. Configuração de permissões
 - As abas criadas são: `USUARIOS`, `SOLICITACOES`, `HISTORICO_STATUS`, `LOGS`, `CONFIG`.
