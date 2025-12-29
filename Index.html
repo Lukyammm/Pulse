@@ -41,6 +41,7 @@
       font-size:15px;
       line-height:1.6;
       padding-top:72px;
+      box-sizing:border-box;
     }
     .topLoginBar{
       position:fixed;
@@ -50,6 +51,7 @@
       align-items:center;
       justify-content:space-between;
       gap:12px;
+      flex-wrap:wrap;
       background:linear-gradient(120deg, rgba(255,255,255,.92), rgba(240,244,255,.95));
       border-bottom:1px solid rgba(10,132,255,.12);
       box-shadow:0 18px 42px rgba(15,23,42,.12);
@@ -78,6 +80,7 @@
       align-items:center;
       justify-content:center;
       padding:28px 16px;
+      box-sizing:border-box;
     }
     .gateCard{
       width:100%;
@@ -107,7 +110,7 @@
     .dot{width:14px; height:14px; border-radius:50%; background:linear-gradient(145deg, #0a84ff, #0f9f8e); box-shadow:0 8px 18px rgba(10,132,255,.25);}
     .gateError{border:1px solid rgba(217,31,17,.25); background:rgba(217,31,17,.08); padding:14px; border-radius:18px; display:flex; flex-direction:column; gap:8px;}
     .gateBadge{display:inline-flex; align-items:center; gap:8px; font-size:12px; color:#7c1212; font-weight:800;}
-    .wrap{max-width:1180px;margin:0 auto;padding:0 24px 32px;}
+    .wrap{max-width:1180px;margin:0 auto;padding:0 16px 32px; box-sizing:border-box;}
     .topbar{
       display:flex; gap:14px; align-items:center; justify-content:space-between;
       padding:16px 18px; border:1px solid var(--line); background:rgba(255,255,255,.9);
@@ -122,7 +125,7 @@
       padding:8px 12px; border:1px solid var(--line); border-radius:999px;
       background:#f9fafb; color:var(--muted); font-size:12px; font-weight:600;
     }
-    .row{display:flex; gap:14px; align-items:center;}
+    .row{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
     .btn{
       appearance:none; border:1px solid var(--line); color:var(--text);
       background:#f8fafc;
@@ -151,7 +154,7 @@
     .listHeaderActions{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
     .drawerWrap{position:fixed; inset:0; pointer-events:none; z-index:30;}
     .drawerOverlay{position:absolute; inset:0; background:rgba(15,23,42,.35); opacity:0; transition:.2s opacity;}
-    .drawer{position:absolute; top:0; right:-100%; width:min(520px, 40vw); max-width:520px; height:100%; background:#ffffff; border-left:1px solid var(--line); box-shadow:-12px 0 32px rgba(15,23,42,.18); border-radius:20px 0 0 20px; padding:20px 20px 26px; display:flex; flex-direction:column; gap:16px; transition:.25s transform, .25s right; transform:translateX(0);}
+    .drawer{position:absolute; top:0; right:-100%; width:100%; max-width:520px; height:100%; background:#ffffff; border-left:1px solid var(--line); box-shadow:-12px 0 32px rgba(15,23,42,.18); border-radius:20px 0 0 20px; padding:20px 20px 26px; display:flex; flex-direction:column; gap:16px; transition:.25s transform, .25s right; transform:translateX(0);}
     .drawer.open{right:0; pointer-events:auto;}
     .drawerWrap.open{pointer-events:auto;}
     .drawerWrap.open .drawerOverlay{opacity:1;}
@@ -160,7 +163,7 @@
     .drawerTitle h3{margin:0; font-size:20px; letter-spacing:-0.3px;}
     .drawerTitle p{margin:0; color:var(--muted); font-size:13px;}
     .drawerBody{flex:1; overflow:auto; padding-right:4px;}
-    .fieldRow{display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px;}
+    .fieldRow{display:grid; grid-template-columns: 1fr; gap:10px;}
     .emptyState{border:1px dashed rgba(10,132,255,.25); border-radius:16px; padding:18px; background:rgba(10,132,255,.04); text-align:center; display:flex; flex-direction:column; gap:8px; align-items:center;}
     .emptyState b{font-size:16px; color:#0b254a;}
     .emptyState p{margin:0; color:var(--muted);}
@@ -206,11 +209,11 @@
     input::placeholder{color:rgba(107,114,128,.7);}
 
     .heroWrap{background:linear-gradient(160deg, rgba(255,255,255,.92), rgba(240,244,255,.96)); border-bottom:1px solid var(--line); box-shadow:0 18px 44px rgba(15,23,42,.06);}
-    .hero{max-width:1180px; margin:0 auto; padding:26px 24px 18px; display:flex; flex-direction:column; gap:18px;}
-    .hero .nav{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+    .hero{max-width:1180px; margin:0 auto; padding:22px 16px 18px; display:flex; flex-direction:column; gap:18px; box-sizing:border-box;}
+    .hero .nav{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
     .hero .nav .logo{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-0.3px; font-size:18px; color:#0b254a;}
     .hero .nav .hint{font-size:13px; color:var(--muted);}
-    .heroCard{display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:center; background: #ffffff; border:1px solid var(--line); border-radius:22px; padding:22px; box-shadow: var(--shadow);}
+    .heroCard{display:flex; flex-direction:column; gap:18px; align-items:flex-start; background: #ffffff; border:1px solid var(--line); border-radius:22px; padding:20px; box-shadow: var(--shadow);}
     .eyebrow{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#0b675d; font-weight:700; background:rgba(15,159,142,.12); border:1px solid rgba(15,159,142,.22); padding:6px 10px; border-radius:999px;}
     .hero h1{margin:6px 0; font-size:28px; letter-spacing:-0.6px; color:#0f172a;}
     .hero p{margin:0; color:var(--muted); font-size:15px;}
@@ -246,8 +249,8 @@
       font-weight:800;
     }
 
-    .detailGrid{display:grid; grid-template-columns: 1fr 320px; gap:14px;}
-    .kpis{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;}
+    .detailGrid{display:grid; grid-template-columns: 1fr; gap:14px;}
+    .kpis{display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:10px;}
     .kpi{
       border:1px solid var(--line);
       border-radius:14px;
@@ -309,13 +312,16 @@
     .mobileNav{display:none; gap:8px;}
     .mobileNav .tab{flex:1; text-align:center;}
 
-    @media (max-width: 980px){
-      .grid{grid-template-columns: 1fr;}
-      .detailGrid{grid-template-columns:1fr;}
-      .kpis{grid-template-columns: repeat(2,1fr);}
-      .topbar{position:static; flex-direction:column; align-items:flex-start; gap:8px;}
-      .row{flex-wrap:wrap;}
-      .drawer{width:100%; max-width:none; right:-100%; border-radius:16px 0 0 16px;}
+    @media (min-width: 720px){
+      .heroCard{display:grid; grid-template-columns:1fr 320px; align-items:center; padding:22px;}
+      .hero{padding:26px 24px 18px;}
+      .wrap{padding:0 24px 32px;}
+      .fieldRow{grid-template-columns: repeat(2, minmax(0,1fr));}
+    }
+    @media (min-width: 980px){
+      .detailGrid{grid-template-columns: 1fr 320px;}
+      .topbar{position:sticky; top:14px; flex-direction:row; align-items:center;}
+      .drawer{width:min(520px, 40vw);}
     }
     @media (max-width: 720px){
       body{font-size:14px;}
@@ -324,7 +330,7 @@
       .card{border-radius:16px;}
       .tabs{display:none;}
       .mobileNav{display:flex; position:fixed; left:14px; right:14px; bottom:14px; background:#f8fafc; padding:6px; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.14); z-index:20;}
-      .topbar{background:rgba(255,255,255,.9); border-radius:16px;}
+      .topbar{background:rgba(255,255,255,.9); border-radius:16px; position:static;}
       .detailGrid{gap:10px;}
       #mobileDrawerSpacer{height:72px;}
       .topbar .row{width:100%; justify-content:flex-start;}
@@ -341,8 +347,8 @@
       .card .hd{padding:14px;}
       .ticket{padding:14px;}
       .mobileNav{gap:6px;}
-      .fieldRow{grid-template-columns:1fr;}
     }
+    input, select, textarea{width:100%; box-sizing:border-box;}
   </style>
 </head>
 
